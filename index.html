@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevineLeTheme</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2196F3">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
+  button { background: #2196F3; color: white; border: none; border-radius: 8px; }
+  .btn-oui { background: #4CAF50; }
+  .btn-non { background: #F44336; }
+  .btn-petit { width: auto; display: inline-block; padding: 6px 14px; font-size: 14px; background: #757575; }
+  #ecran_attente, #ecran_jeu, #ecran_fin { display: none; text-align: center; }
+  #code_affiche { font-size: 2em; font-weight: bold; margin: 20px 0; }
+  #liste_joueurs, #historique { list-style: none; padding: 0; text-align: left; }
+  #liste_joueurs li, #historique li { padding: 8px; background: #eee; margin: 4px 0; border-radius: 6px; }
+  .badge-oui { color: #4CAF50; font-weight: bold; }
+  .badge-non { color: #F44336; font-weight: bold; }
+  #mon_theme { font-size: 1.3em; font-weight: bold; background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
+  #choix_action { display: flex; gap: 8px; }
+  #choix_action button { flex: 1; }
+</style>
+</head>
+<body>
+
+  <div id="ecran_accueil">
+    <input type="text" id="edit_pseudo" placeholder="Entre ton pseudo">
+    <button id="btn_creer">Creer une salle</button>
+    <input type="text" id="edit_code" placeholder="Code de la salle">
+    <button id="btn_rejoindre">Rejoindre</button>
+  </div>
+
+  <div id="ecran_attente">
+    <p>Code de la salle :</p>
+    <div id="code_affiche"></div>
+    <p id="statut_attente">En attente de l'autre joueur...</p>
+    <ul id="liste_joueurs"></ul>
+  </div>
+
+  <div id="ecran_jeu">
+    <p>Ton theme secret :</p>
+    <div id="mon_theme"></div>
+    <button class="btn-petit" id="btn_historique">Historique</button>
+    <div id="zone_action"></div>
+    <ul id="historique" style="display:none;"></ul>
+  </div>
+
+  <div id="ecran_fin">
+    <h2 id="message_fin"></h2>
+    <p id="themes_reveles"></p>
+    <button id="btn_rejouer">Rejouer</button>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAAgvcm1-Ruq87kAMDqInMD1dj18VBYQiI",
+    authDomain: "jeuimage-c2c20.firebaseapp.com",
+    databaseURL: "https://jeuimage-c2c20-default-rtdb.firebaseio.com",
+    projectId: "jeuimage-c2c20",
+    storageBucket: "jeuimage-c2c20.firebasestorage.app",
+    messagingSenderId: "776108150890",
+    appId: "1:776108150890:web:f6ced9dc794c383c01ba13"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const THEMES_DEFAUT = {
+    t1: { texte: "Abricot", image: "https://i.imgur.com/203zFh4.png" },
+    t2: { texte: "Orange", image: "https://i.imgur.com/gVWG4HB.jpeg" },
+    t3: { texte: "Poire", image: "https://i.imgur.com/rzHnGaq.jpeg" },
+    t4: { texte: "Papaye", image: "https://i.imgur.com/IGs1lcZ.jpeg" },
+    t5: { texte: "Café", image: "https://i.imgur.com/wA4zIcI.jpeg" },
+    t6: { texte: "Cacao", image: "https://i.imgur.com/1HWBovG.jpeg" },
+    t7: { texte: "Cinema", image: "https://i.imgur.com/zEQlNVT.jpeg" },
+    t8: { texte: "Kiwi", image: "https://i.imgur.com/h0QDSCc.png" },
+    t9: { texte: "Madeleine", image: "https://i.imgur.com/QepJzYG.jpeg" },
+    t10: { texte: "Mangue", image: "https://i.imgur.com/tLNkhpQ.jpeg" },
+    t11: { texte: "Chocolat", image: "https://i.imgur.com/Ag2XMA6.png" }
+  };
+
+  let monCode = "";
+  let monPseudo = "";
+
+  function afficherEcran(id) {
+    ["ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin"].forEach(e => {
+      document.getElementById(e).style.display = (e === id) ? "block" : "none";
+    });
+  }
+
+  function afficherSalleAttente(code) {
+    afficherEcran("ecran_attente");
+    document.getElementById("code_affiche").innerText = code;
+  }
+
+  async function assignerThemesSiHote(noms, etat) {
+    if (etat.hote !== monPseudo) return;
+    if (etat.phase && etat.phase !== "attente") return;
+    if (noms.length < 2) return;
+
+    let themesSnap = await get(ref(db, "themes"));
+    let themesData = themesSnap.val();
+    if (!themesData) {
+      await set(ref(db, "themes"), THEMES_DEFAUT);
+      themesData = THEMES_DEFAUT;
+    }
+
+    const listeThemes = Object.values(themesData);
+    const melange = [...listeThemes].sort(() => Math.random() - 0.5);
+    const ordre = [...noms].sort(() => Math.random() - 0.5);
+
+    const updates = {};
+    updates["rooms/" + monCode + "/joueurs/" + noms[0] + "/theme"] = melange[0];
+    updates["rooms/" + monCode + "/joueurs/" + noms[1] + "/theme"] = melange[1];
+    updates["rooms/" + monCode + "/etat/ordre"] = ordre;
+    updates["rooms/" + monCode + "/etat/tour"] = 0;
+    updates["rooms/" + monCode + "/etat/phase"] = "jeu";
+    await update(ref(db), updates);
+  }
+
+  function afficherTheme(theme) {
+    const div = document.getElementById("mon_theme");
+    if (!theme) { div.innerHTML = ""; return; }
+    let html = "";
+    if (theme.image) {
+      html += '<img src="' + theme.image + '" style="max-width:180px;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px;">';
+    }
+    if (theme.texte) {
+      html += '<div>' + theme.texte + '</div>';
+    }
+    div.innerHTML = html;
+  }
+
+  function afficherHistorique(historique) {
+    const liste = document.getElementById("historique");
+    liste.innerHTML = "";
+    Object.keys(historique).sort((a, b) => a - b).forEach(k => {
+      const item = historique[k];
+      const li = document.createElement("li");
+      if (item.type === "question") {
+        const badge = item.reponse === "oui"
+          ? '<span class="badge-oui">Oui</span>'
+          : '<span class="badge-non">Non</span>';
+        li.innerHTML = item.joueur + ' a demande : ' + item.mot + ' -> ' + badge;
+      } else {
+        li.innerHTML = item.joueur + ' a tente de deviner : ' + item.mot + ' -> <span class="badge-non">Rate</span>';
+      }
+      liste.appendChild(li);
+    });
+  }
+
+  function afficherEcranJeu(room) {
+    afficherEcran("ecran_jeu");
+
+    const etat = room.etat;
+    const joueurs = room.joueurs;
+    const noms = Object.keys(joueurs);
+
+    afficherTheme(joueurs[monPseudo].theme);
+    afficherHistorique(room.historique || {});
+
+    const joueurActif = etat.ordre[etat.tour % 2];
+    const action = room.actionCourante;
+    const zone = document.getElementById("zone_action");
+
+    if (action && action.joueur !== monPseudo) {
+      if (action.type === "guess") {
+        zone.innerHTML = '<p><b>' + action.joueur + '</b> pense que ton theme est : <b>' + action.mot + '</b></p>' +
+          '<button class="btn-oui" id="btn_correct">Oui, il a devine juste</button>' +
+          '<button class="btn-non" id="btn_incorrect">Non, ce n\'est pas ca</button>';
+        document.getElementById("btn_correct").addEventListener("click", () => confirmerDevinette(true));
+        document.getElementById("btn_incorrect").addEventListener("click", () => confirmerDevinette(false));
+      } else {
+        zone.innerHTML = '<p><b>' + action.joueur + '</b> te demande : ' + action.mot + ' - est-ce lie a ton theme ?</p>' +
+          '<button class="btn-oui" id="btn_oui">Oui</button><button class="btn-non" id="btn_non">Non</button>';
+        document.getElementById("btn_oui").addEventListener("click", () => repondre("oui"));
+        document.getElementById("btn_non").addEventListener("click", () => repondre("non"));
+      }
+    } else if (joueurActif === monPseudo) {
+      zone.innerHTML =
+        '<div id="choix_action"><button id="btn_poser">Poser une question</button><button id="btn_deviner">Deviner</button></div>' +
+        '<input type="text" id="edit_saisie" placeholder="Ton mot / ta reponse" style="display:none;">' +
+        '<button id="btn_valider" style="display:none;">Valider</button>';
+
+      let modeActuel = "";
+      document.getElementById("btn_poser").addEventListener("click", () => {
+        modeActuel = "question";
+        document.getElementById("edit_saisie").style.display = "block";
+        document.getElementById("btn_valider").style.display = "block";
+      });
+      document.getElementById("btn_deviner").addEventListener("click", () => {
+        modeActuel = "guess";
+        document.getElementById("edit_saisie").style.display = "block";
+        document.getElementById("btn_valider").style.display = "block";
+      });
+      document.getElementById("btn_valider").addEventListener("click", () => {
+        const valeur = document.getElementById("edit_saisie").value.trim();
+        if (!valeur) { alert("Ecris quelque chose !"); return; }
+        if (modeActuel === "question") poserQuestion(valeur);
+        if (modeActuel === "guess") proposerDevinette(valeur);
+      });
+    } else {
+      zone.innerHTML = '<p>En attente de <b>' + joueurActif + '</b>...</p>';
+    }
+  }
+
+  async function poserQuestion(mot) {
+    await set(ref(db, "rooms/" + monCode + "/actionCourante"), { joueur: monPseudo, mot: mot, type: "question" });
+  }
+
+  async function proposerDevinette(devinette) {
+    await set(ref(db, "rooms/" + monCode + "/actionCourante"), { joueur: monPseudo, mot: devinette, type: "guess" });
+  }
+
+  async function repondre(reponse) {
+    const actionSnap = await get(ref(db, "rooms/" + monCode + "/actionCourante"));
+    const action = actionSnap.val();
+    const historiqueSnap = await get(ref(db, "rooms/" + monCode + "/historique"));
+    const historique = historiqueSnap.val() || {};
+    const prochainIndex = Object.keys(historique).length;
+    const etatSnap = await get(ref(db, "rooms/" + monCode + "/etat"));
+    const etat = etatSnap.val();
+
+    const updates = {};
+    updates["rooms/" + monCode + "/historique/" + prochainIndex] = { joueur: action.joueur, type: "question", mot: action.mot, reponse: reponse };
+    updates["rooms/" + monCode + "/actionCourante"] = null;
+    updates["rooms/" + monCode + "/etat/tour"] = etat.tour + 1;
+    await update(ref(db), updates);
+  }
+
+  async function confirmerDevinette(estCorrect) {
+    const actionSnap = await get(ref(db, "rooms/" + monCode + "/actionCourante"));
+    const action = actionSnap.val();
+    const etatSnap = await get(ref(db, "rooms/" + monCode + "/etat"));
+    const etat = etatSnap.val();
+
+    if (estCorrect) {
+      const updates = {};
+      updates["rooms/" + monCode + "/etat/phase"] = "fini";
+      updates["rooms/" + monCode + "/etat/gagnant"] = action.joueur;
+      updates["rooms/" + monCode + "/actionCourante"] = null;
+      await update(ref(db), updates);
+    } else {
+      const historiqueSnap = await get(ref(db, "rooms/" + monCode + "/historique"));
+      const historique = historiqueSnap.val() || {};
+      const prochainIndex = Object.keys(historique).length;
+      const updates = {};
+      updates["rooms/" + monCode + "/historique/" + prochainIndex] = { joueur: action.joueur, type: "guess", mot: action.mot };
+      updates["rooms/" + monCode + "/actionCourante"] = null;
+      updates["rooms/" + monCode + "/etat/tour"] = etat.tour + 1;
+      await update(ref(db), updates);
+    }
+  }
+
+  function afficherFin(room) {
+    afficherEcran("ecran_fin");
+    document.getElementById("message_fin").innerText = room.etat.gagnant + " a gagne !";
+    const themesTxt = Object.keys(room.joueurs).map(n => {
+      const t = room.joueurs[n].theme || {};
+      return n + " avait : " + (t.texte || "(image)");
+    }).join(" | ");
+    document.getElementById("themes_reveles").innerText = themesTxt;
+  }
+
+  function ecouterSalle(code) {
+    onValue(ref(db, "rooms/" + code), async (snapshot) => {
+      const room = snapshot.val() || {};
+      const joueurs = room.joueurs || {};
+      const etat = room.etat || {};
+      const noms = Object.keys(joueurs);
+
+      if (!etat.phase || etat.phase === "attente") {
+        afficherEcran("ecran_attente");
+        document.getElementById("code_affiche").innerText = code;
+        const liste = document.getElementById("liste_joueurs");
+        liste.innerHTML = "";
+        noms.forEach(nom => {
+          const li = document.createElement("li");
+          li.innerText = nom;
+          liste.appendChild(li);
+        });
+        document.getElementById("statut_attente").innerText = noms.length + " / 2 joueurs connectes";
+        if (noms.length >= 2) await assignerThemesSiHote(noms, etat);
+      } else if (etat.phase === "jeu") {
+        afficherEcranJeu(room);
+      } else if (etat.phase === "fini") {
+        afficherFin(room);
+      }
+    });
+  }
+
+  document.getElementById("btn_creer").addEventListener("click", async () => {
+    monPseudo = document.getElementById("edit_pseudo").value.trim();
+    if (!monPseudo) { alert("Entre un pseudo d'abord !"); return; }
+
+    monCode = String(Math.floor(1000 + Math.random() * 9000));
+    await set(ref(db, "rooms/" + monCode + "/joueurs/" + monPseudo), { pret: true });
+    await set(ref(db, "rooms/" + monCode + "/etat"), { phase: "attente", hote: monPseudo });
+
+    afficherSalleAttente(monCode);
+    ecouterSalle(monCode);
+  });
+
+  document.getElementById("btn_rejoindre").addEventListener("click", async () => {
+    monPseudo = document.getElementById("edit_pseudo").value.trim();
+    monCode = document.getElementById("edit_code").value.trim();
+    if (!monPseudo || !monCode) { alert("Entre ton pseudo et un code !"); return; }
+
+    const snapshot = await get(ref(db, "rooms/" + monCode + "/joueurs"));
+    const joueursExistants = snapshot.val() || {};
+    const noms = Object.keys(joueursExistants);
+    if (noms.length >= 2 && !noms.includes(monPseudo)) { alert("Cette salle est deja complete !"); return; }
+
+    await set(ref(db, "rooms/" + monCode + "/joueurs/" + monPseudo), { pret: true });
+
+    afficherSalleAttente(monCode);
+    ecouterSalle(monCode);
+  });
+
+  document.getElementById("btn_historique").addEventListener("click", () => {
+    const h = document.getElementById("historique");
+    h.style.display = (h.style.display === "none") ? "block" : "none";
+  });
+
+  document.getElementById("btn_rejouer").addEventListener("click", async () => {
+    const updates = {};
+    updates["rooms/" + monCode + "/etat/phase"] = "attente";
+    updates["rooms/" + monCode + "/etat/gagnant"] = null;
+    updates["rooms/" + monCode + "/historique"] = null;
+    updates["rooms/" + monCode + "/actionCourante"] = null;
+    await update(ref(db), updates);
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch((err) => {
+        console.warn("Echec de l'enregistrement du service worker :", err);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
