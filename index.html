@@ -106,7 +106,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-  import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+  import { getDatabase, ref, set, get, update, onValue, push } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAAgvcm1-Ruq87kAMDqInMD1dj18VBYQiI",
@@ -582,36 +582,64 @@
       conteneur.innerHTML = "<p>Aucun theme pour le moment.</p>";
       return;
     }
+
+    // Regrouper les themes par section pour ne pas tout melanger
+    const groupes = {};
     cles.forEach(cle => {
       const theme = themesData[cle];
-      const nomSection = sectionsData[theme.section] ? sectionsData[theme.section].nom : "?";
-      const div = document.createElement("div");
-      div.className = "carte_theme";
-      div.innerHTML =
-        (theme.image ? '<img src="' + theme.image + '">' : '') +
-        '<span>' + theme.texte + ' (' + nomSection + ')</span>' +
-        '<button class="btn-modifier" data-cle="' + cle + '">Modifier</button>' +
-        '<button data-cle="' + cle + '">Supprimer</button>';
-      div.querySelector(".btn-modifier").addEventListener("click", () => {
-        cleThemeEnEdition = cle;
-        document.getElementById("select_section_theme").value = theme.section;
-        document.getElementById("edit_nouveau_nom").value = theme.texte;
-        document.getElementById("edit_nouvelle_image").value = theme.image || "";
-        document.getElementById("edit_nouvelle_info").value = theme.info || "";
-        document.getElementById("btn_ajouter_theme").innerText = "Enregistrer les modifications";
-        document.getElementById("btn_annuler_edition").style.display = "block";
-        document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
-      });
-      div.querySelectorAll("button")[1].addEventListener("click", async () => {
-        try {
-          await set(ref(db, "themes/" + cle), null);
-          await chargerThemesAdmin();
-        } catch (err) {
-          alert("Erreur lors de la suppression : " + err.message);
-        }
-      });
-      conteneur.appendChild(div);
+      const sectionCle = theme.section || "_sans_section";
+      if (!groupes[sectionCle]) groupes[sectionCle] = [];
+      groupes[sectionCle].push(cle);
     });
+
+    // Afficher d'abord les sections connues, dans l'ordre ou elles existent
+    Object.keys(sectionsData).forEach(sectionCle => {
+      if (!groupes[sectionCle]) return;
+      const titre = document.createElement("h4");
+      titre.innerText = sectionsData[sectionCle].nom;
+      titre.style.margin = "16px 0 4px";
+      conteneur.appendChild(titre);
+      groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
+      delete groupes[sectionCle];
+    });
+
+    // Puis les themes dont la section n'existe plus / est inconnue
+    Object.keys(groupes).forEach(sectionCle => {
+      const titre = document.createElement("h4");
+      titre.innerText = "Section inconnue";
+      titre.style.margin = "16px 0 4px";
+      conteneur.appendChild(titre);
+      groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
+    });
+  }
+
+  function creerCarteThemeAdmin(conteneur, cle, theme) {
+    const div = document.createElement("div");
+    div.className = "carte_theme";
+    div.innerHTML =
+      (theme.image ? '<img src="' + theme.image + '">' : '') +
+      '<span>' + theme.texte + '</span>' +
+      '<button class="btn-modifier" data-cle="' + cle + '">Modifier</button>' +
+      '<button data-cle="' + cle + '">Supprimer</button>';
+    div.querySelector(".btn-modifier").addEventListener("click", () => {
+      cleThemeEnEdition = cle;
+      document.getElementById("select_section_theme").value = theme.section;
+      document.getElementById("edit_nouveau_nom").value = theme.texte;
+      document.getElementById("edit_nouvelle_image").value = theme.image || "";
+      document.getElementById("edit_nouvelle_info").value = theme.info || "";
+      document.getElementById("btn_ajouter_theme").innerText = "Enregistrer les modifications";
+      document.getElementById("btn_annuler_edition").style.display = "block";
+      document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
+    });
+    div.querySelectorAll("button")[1].addEventListener("click", async () => {
+      try {
+        await set(ref(db, "themes/" + cle), null);
+        await chargerThemesAdmin();
+      } catch (err) {
+        alert("Erreur lors de la suppression : " + err.message);
+      }
+    });
+    conteneur.appendChild(div);
   }
 
   document.getElementById("btn_admin").addEventListener("click", () => {
@@ -644,12 +672,8 @@
     if (!nom) { alert("Entre un nom de section !"); return; }
 
     try {
-      const snap = await get(ref(db, "sections"));
-      const data = snap.val() || {};
-      const cles = Object.keys(data).map(c => parseInt(c.replace("s", ""), 10)).filter(n => !isNaN(n));
-      const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
-
-      await set(ref(db, "sections/s" + prochainNum), { nom: nom });
+      const nouvelleRef = push(ref(db, "sections"));
+      await set(nouvelleRef, { nom: nom });
 
       document.getElementById("edit_nouvelle_section").value = "";
       await chargerSectionsAdmin();
@@ -671,12 +695,8 @@
         await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie, info: info });
         annulerEditionTheme();
       } else {
-        const snap = await get(ref(db, "themes"));
-        const themesData = snap.val() || {};
-        const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
-        const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
-        const nouvelleCle = "t" + prochainNum;
-        await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie, info: info });
+        const nouvelleRef = push(ref(db, "themes"));
+        await set(nouvelleRef, { texte: nom, image: image, section: sectionChoisie, info: info });
       }
 
       document.getElementById("edit_nouveau_nom").value = "";
