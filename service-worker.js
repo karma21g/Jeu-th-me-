@@ -1,4 +1,4 @@
-const CACHE_NAME = "devine-le-theme-v5";
+const CACHE_NAME = "devine-le-theme-v6";
 const FICHIERS_A_CACHER = [
   "./index.html",
   "./manifest.json",

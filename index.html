@@ -554,8 +554,12 @@
       div.className = "carte_theme";
       div.innerHTML = '<span>' + data[cle].nom + '</span><button data-cle="' + cle + '">Supprimer</button>';
       div.querySelector("button").addEventListener("click", async () => {
-        await set(ref(db, "sections/" + cle), null);
-        chargerSectionsAdmin();
+        try {
+          await set(ref(db, "sections/" + cle), null);
+          await chargerSectionsAdmin();
+        } catch (err) {
+          alert("Erreur lors de la suppression de la section : " + err.message);
+        }
       });
       conteneur.appendChild(div);
 
@@ -599,8 +603,12 @@
         document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
       });
       div.querySelectorAll("button")[1].addEventListener("click", async () => {
-        await set(ref(db, "themes/" + cle), null);
-        chargerThemesAdmin();
+        try {
+          await set(ref(db, "themes/" + cle), null);
+          await chargerThemesAdmin();
+        } catch (err) {
+          alert("Erreur lors de la suppression : " + err.message);
+        }
       });
       conteneur.appendChild(div);
     });
@@ -635,15 +643,19 @@
     const nom = document.getElementById("edit_nouvelle_section").value.trim();
     if (!nom) { alert("Entre un nom de section !"); return; }
 
-    const snap = await get(ref(db, "sections"));
-    const data = snap.val() || {};
-    const cles = Object.keys(data).map(c => parseInt(c.replace("s", ""), 10)).filter(n => !isNaN(n));
-    const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
+    try {
+      const snap = await get(ref(db, "sections"));
+      const data = snap.val() || {};
+      const cles = Object.keys(data).map(c => parseInt(c.replace("s", ""), 10)).filter(n => !isNaN(n));
+      const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
 
-    await set(ref(db, "sections/s" + prochainNum), { nom: nom });
+      await set(ref(db, "sections/s" + prochainNum), { nom: nom });
 
-    document.getElementById("edit_nouvelle_section").value = "";
-    chargerSectionsAdmin();
+      document.getElementById("edit_nouvelle_section").value = "";
+      await chargerSectionsAdmin();
+    } catch (err) {
+      alert("Erreur lors de l'ajout de la section : " + err.message);
+    }
   });
 
   document.getElementById("btn_ajouter_theme").addEventListener("click", async () => {
@@ -654,22 +666,26 @@
     if (!nom) { alert("Entre un nom de theme !"); return; }
     if (!sectionChoisie) { alert("Cree d'abord une section !"); return; }
 
-    if (cleThemeEnEdition) {
-      await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie, info: info });
-      annulerEditionTheme();
-    } else {
-      const snap = await get(ref(db, "themes"));
-      const themesData = snap.val() || {};
-      const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
-      const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
-      const nouvelleCle = "t" + prochainNum;
-      await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie, info: info });
-    }
+    try {
+      if (cleThemeEnEdition) {
+        await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie, info: info });
+        annulerEditionTheme();
+      } else {
+        const snap = await get(ref(db, "themes"));
+        const themesData = snap.val() || {};
+        const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
+        const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
+        const nouvelleCle = "t" + prochainNum;
+        await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie, info: info });
+      }
 
-    document.getElementById("edit_nouveau_nom").value = "";
-    document.getElementById("edit_nouvelle_image").value = "";
-    document.getElementById("edit_nouvelle_info").value = "";
-    chargerThemesAdmin();
+      document.getElementById("edit_nouveau_nom").value = "";
+      document.getElementById("edit_nouvelle_image").value = "";
+      document.getElementById("edit_nouvelle_info").value = "";
+      await chargerThemesAdmin();
+    } catch (err) {
+      alert("Erreur lors de la sauvegarde du theme : " + err.message);
+    }
   });
 
   function annulerEditionTheme() {
