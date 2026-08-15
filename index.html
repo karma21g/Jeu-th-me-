@@ -30,6 +30,8 @@
   .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
   .carte_theme span { flex: 1; }
   .carte_theme button { width: auto; padding: 6px 10px; margin: 0; background: #F44336; font-size: 13px; }
+  .carte_theme .btn-modifier { background: #FF9800; margin-right: 6px; }
+  #btn_annuler_edition { background: #757575; display: none; }
   #btn_retour_admin { background: #757575; }
   #liste_themes_possibles, #historique { display: none; text-align: left; }
   .boutons_secondaires { display: flex; gap: 6px; }
@@ -67,6 +69,7 @@
       <input type="text" id="edit_nouveau_nom" placeholder="Nom du theme">
       <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
       <button id="btn_ajouter_theme">Ajouter</button>
+      <button id="btn_annuler_edition">Annuler la modification</button>
       <h3>Themes actuels</h3>
       <div id="liste_themes_admin"></div>
       <button id="btn_retour_admin2">Retour</button>
@@ -137,6 +140,7 @@
 
   let monCode = "";
   let monPseudo = "";
+  let cleThemeEnEdition = null;
 
   function afficherEcran(id) {
     ["ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin", "ecran_admin"].forEach(e => {
@@ -571,8 +575,18 @@
       div.innerHTML =
         (theme.image ? '<img src="' + theme.image + '">' : '') +
         '<span>' + theme.texte + ' (' + nomSection + ')</span>' +
+        '<button class="btn-modifier" data-cle="' + cle + '">Modifier</button>' +
         '<button data-cle="' + cle + '">Supprimer</button>';
-      div.querySelector("button").addEventListener("click", async () => {
+      div.querySelector(".btn-modifier").addEventListener("click", () => {
+        cleThemeEnEdition = cle;
+        document.getElementById("select_section_theme").value = theme.section;
+        document.getElementById("edit_nouveau_nom").value = theme.texte;
+        document.getElementById("edit_nouvelle_image").value = theme.image || "";
+        document.getElementById("btn_ajouter_theme").innerText = "Enregistrer les modifications";
+        document.getElementById("btn_annuler_edition").style.display = "block";
+        document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
+      });
+      div.querySelectorAll("button")[1].addEventListener("click", async () => {
         await set(ref(db, "themes/" + cle), null);
         chargerThemesAdmin();
       });
@@ -601,6 +615,7 @@
   });
 
   document.getElementById("btn_retour_admin2").addEventListener("click", () => {
+    annulerEditionTheme();
     afficherEcran("ecran_accueil");
   });
 
@@ -626,18 +641,32 @@
     if (!nom) { alert("Entre un nom de theme !"); return; }
     if (!sectionChoisie) { alert("Cree d'abord une section !"); return; }
 
-    const snap = await get(ref(db, "themes"));
-    const themesData = snap.val() || {};
-    const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
-    const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
-    const nouvelleCle = "t" + prochainNum;
-
-    await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie });
+    if (cleThemeEnEdition) {
+      await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie });
+      annulerEditionTheme();
+    } else {
+      const snap = await get(ref(db, "themes"));
+      const themesData = snap.val() || {};
+      const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
+      const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
+      const nouvelleCle = "t" + prochainNum;
+      await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie });
+    }
 
     document.getElementById("edit_nouveau_nom").value = "";
     document.getElementById("edit_nouvelle_image").value = "";
     chargerThemesAdmin();
   });
+
+  function annulerEditionTheme() {
+    cleThemeEnEdition = null;
+    document.getElementById("btn_ajouter_theme").innerText = "Ajouter";
+    document.getElementById("btn_annuler_edition").style.display = "none";
+    document.getElementById("edit_nouveau_nom").value = "";
+    document.getElementById("edit_nouvelle_image").value = "";
+  }
+
+  document.getElementById("btn_annuler_edition").addEventListener("click", annulerEditionTheme);
 
   chargerSectionsAccueil();
 
