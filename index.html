@@ -65,6 +65,7 @@
       <div id="liste_sections_admin"></div>
 
       <h3>Ajouter un theme</h3>
+      <p style="margin:4px 0; font-size:13px; color:#666;">Cette section choisie sert aussi a filtrer la liste ci-dessous.</p>
       <select id="select_section_theme"></select>
       <input type="text" id="edit_nouveau_nom" placeholder="Nom du theme">
       <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
@@ -103,6 +104,8 @@
     <p id="themes_reveles"></p>
     <button id="btn_rejouer">Rejouer</button>
   </div>
+
+  <canvas id="canvas_feu" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -272,7 +275,7 @@
       return;
     }
     zone.innerHTML =
-      '<p><b>Toutes les 3 questions</b>, donne un indice sur ton theme !</p>' +
+      '<p><b>Toutes les 6 questions</b>, donne un indice sur ton theme !</p>' +
       '<input type="text" id="edit_indice" placeholder="Ton indice">' +
       '<button id="btn_valider_indice">Envoyer l\'indice</button>';
     document.getElementById("btn_valider_indice").addEventListener("click", () => envoyerIndice());
@@ -409,9 +412,9 @@
 
     const nbQuestions = Object.values(historique).filter(h => h.type === "question").length + 1;
     const dernierSeuil = etat.dernierSeuilIndice || 0;
-    if (nbQuestions >= dernierSeuil + 3) {
+    if (nbQuestions >= dernierSeuil + 6) {
       updates["rooms/" + monCode + "/etat/phase"] = "indice";
-      updates["rooms/" + monCode + "/etat/dernierSeuilIndice"] = dernierSeuil + 3;
+      updates["rooms/" + monCode + "/etat/dernierSeuilIndice"] = dernierSeuil + 6;
       updates["rooms/" + monCode + "/etat/indicesRecus"] = {};
     }
 
@@ -450,6 +453,68 @@
       return n + " avait : " + (t.texte || "(image)");
     }).join(" | ");
     document.getElementById("themes_reveles").innerText = themesTxt;
+    lancerFeuArtifice();
+  }
+
+  function lancerFeuArtifice() {
+    const canvas = document.getElementById("canvas_feu");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const couleurs = ["#FF5252", "#FFD740", "#69F0AE", "#40C4FF", "#E040FB", "#FF6E40", "#FFFFFF"];
+    const particules = [];
+
+    function creerExplosion(x, y) {
+      const nb = 45;
+      for (let i = 0; i < nb; i++) {
+        const angle = (Math.PI * 2 * i) / nb;
+        const vitesse = 2 + Math.random() * 3.5;
+        particules.push({
+          x, y,
+          vx: Math.cos(angle) * vitesse,
+          vy: Math.sin(angle) * vitesse,
+          vie: 55 + Math.random() * 25,
+          vieDepart: 80,
+          couleur: couleurs[Math.floor(Math.random() * couleurs.length)]
+        });
+      }
+    }
+
+    let nbExplosions = 0;
+    const totalExplosions = 6;
+    const intervalExplosions = setInterval(() => {
+      creerExplosion(
+        canvas.width * (0.2 + Math.random() * 0.6),
+        canvas.height * (0.15 + Math.random() * 0.35)
+      );
+      nbExplosions++;
+      if (nbExplosions >= totalExplosions) clearInterval(intervalExplosions);
+    }, 350);
+
+    function boucle() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particules.length - 1; i >= 0; i--) {
+        const p = particules[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.vie--;
+        if (p.vie <= 0) { particules.splice(i, 1); continue; }
+        ctx.globalAlpha = Math.max(p.vie / p.vieDepart, 0);
+        ctx.fillStyle = p.couleur;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (particules.length > 0 || nbExplosions < totalExplosions) {
+        requestAnimationFrame(boucle);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    boucle();
   }
 
   function ecouterSalle(code) {
@@ -577,40 +642,22 @@
     const sectionsData = sectionsSnap.val() || {};
     const conteneur = document.getElementById("liste_themes_admin");
     conteneur.innerHTML = "";
-    const cles = Object.keys(themesData);
+
+    const sectionFiltree = document.getElementById("select_section_theme").value;
+    const cles = Object.keys(themesData).filter(cle => themesData[cle].section === sectionFiltree);
+
+    const nomSectionFiltree = sectionsData[sectionFiltree] ? sectionsData[sectionFiltree].nom : "";
+    const titre = document.createElement("h4");
+    titre.innerText = nomSectionFiltree ? "Themes de : " + nomSectionFiltree : "Themes";
+    titre.style.margin = "8px 0 4px";
+    conteneur.appendChild(titre);
+
     if (cles.length === 0) {
-      conteneur.innerHTML = "<p>Aucun theme pour le moment.</p>";
+      conteneur.innerHTML += "<p>Aucun theme dans cette section.</p>";
       return;
     }
 
-    // Regrouper les themes par section pour ne pas tout melanger
-    const groupes = {};
-    cles.forEach(cle => {
-      const theme = themesData[cle];
-      const sectionCle = theme.section || "_sans_section";
-      if (!groupes[sectionCle]) groupes[sectionCle] = [];
-      groupes[sectionCle].push(cle);
-    });
-
-    // Afficher d'abord les sections connues, dans l'ordre ou elles existent
-    Object.keys(sectionsData).forEach(sectionCle => {
-      if (!groupes[sectionCle]) return;
-      const titre = document.createElement("h4");
-      titre.innerText = sectionsData[sectionCle].nom;
-      titre.style.margin = "16px 0 4px";
-      conteneur.appendChild(titre);
-      groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
-      delete groupes[sectionCle];
-    });
-
-    // Puis les themes dont la section n'existe plus / est inconnue
-    Object.keys(groupes).forEach(sectionCle => {
-      const titre = document.createElement("h4");
-      titre.innerText = "Section inconnue";
-      titre.style.margin = "16px 0 4px";
-      conteneur.appendChild(titre);
-      groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
-    });
+    cles.forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
   }
 
   function creerCarteThemeAdmin(conteneur, cle, theme) {
@@ -656,6 +703,10 @@
     document.getElementById("admin_panneau").style.display = "block";
     await chargerSectionsAdmin();
     await chargerThemesAdmin();
+  });
+
+  document.getElementById("select_section_theme").addEventListener("change", () => {
+    chargerThemesAdmin();
   });
 
   document.getElementById("btn_retour_admin").addEventListener("click", () => {
