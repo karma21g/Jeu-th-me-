@@ -68,6 +68,7 @@
       <select id="select_section_theme"></select>
       <input type="text" id="edit_nouveau_nom" placeholder="Nom du theme">
       <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
+      <textarea id="edit_nouvelle_info" placeholder="Information sur le theme (optionnel, ex: explication, definition...)" rows="3" style="width:100%; padding:12px; margin:8px 0; font-size:16px; box-sizing:border-box; font-family:inherit;"></textarea>
       <button id="btn_ajouter_theme">Ajouter</button>
       <button id="btn_annuler_edition">Annuler la modification</button>
       <h3>Themes actuels</h3>
@@ -85,6 +86,8 @@
 
   <div id="ecran_jeu">
     <p>Ton theme secret :</p>
+    <button class="btn-petit" id="btn_info_theme" style="background:#FF9800;">Informations</button>
+    <div id="info_theme" style="display:none; text-align:left; background:#fff3e0; padding:10px; border-radius:8px; margin:8px 0;"></div>
     <div id="mon_theme"></div>
     <div class="boutons_secondaires">
       <button class="btn-petit" id="btn_historique">Historique</button>
@@ -212,7 +215,7 @@
 
   function afficherTheme(theme) {
     const div = document.getElementById("mon_theme");
-    if (!theme) { div.innerHTML = ""; return; }
+    if (!theme) { div.innerHTML = ""; document.getElementById("info_theme").innerHTML = ""; return; }
     let html = "";
     if (theme.image) {
       html += '<img src="' + theme.image + '" style="max-width:180px;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px;">';
@@ -221,6 +224,9 @@
       html += '<div>' + theme.texte + '</div>';
     }
     div.innerHTML = html;
+
+    const infoDiv = document.getElementById("info_theme");
+    infoDiv.innerHTML = theme.info ? theme.info : "Aucune information disponible pour ce theme.";
   }
 
   function afficherHistorique(historique) {
@@ -513,6 +519,11 @@
     c.style.display = (c.style.display === "none") ? "block" : "none";
   });
 
+  document.getElementById("btn_info_theme").addEventListener("click", () => {
+    const c = document.getElementById("info_theme");
+    c.style.display = (c.style.display === "none") ? "block" : "none";
+  });
+
   document.getElementById("btn_rejouer").addEventListener("click", async () => {
     const updates = {};
     updates["rooms/" + monCode + "/etat/phase"] = "attente";
@@ -582,6 +593,7 @@
         document.getElementById("select_section_theme").value = theme.section;
         document.getElementById("edit_nouveau_nom").value = theme.texte;
         document.getElementById("edit_nouvelle_image").value = theme.image || "";
+        document.getElementById("edit_nouvelle_info").value = theme.info || "";
         document.getElementById("btn_ajouter_theme").innerText = "Enregistrer les modifications";
         document.getElementById("btn_annuler_edition").style.display = "block";
         document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
@@ -637,12 +649,13 @@
   document.getElementById("btn_ajouter_theme").addEventListener("click", async () => {
     const nom = document.getElementById("edit_nouveau_nom").value.trim();
     const image = document.getElementById("edit_nouvelle_image").value.trim();
+    const info = document.getElementById("edit_nouvelle_info").value.trim();
     const sectionChoisie = document.getElementById("select_section_theme").value;
     if (!nom) { alert("Entre un nom de theme !"); return; }
     if (!sectionChoisie) { alert("Cree d'abord une section !"); return; }
 
     if (cleThemeEnEdition) {
-      await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie });
+      await set(ref(db, "themes/" + cleThemeEnEdition), { texte: nom, image: image, section: sectionChoisie, info: info });
       annulerEditionTheme();
     } else {
       const snap = await get(ref(db, "themes"));
@@ -650,11 +663,12 @@
       const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
       const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
       const nouvelleCle = "t" + prochainNum;
-      await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie });
+      await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie, info: info });
     }
 
     document.getElementById("edit_nouveau_nom").value = "";
     document.getElementById("edit_nouvelle_image").value = "";
+    document.getElementById("edit_nouvelle_info").value = "";
     chargerThemesAdmin();
   });
 
@@ -664,6 +678,7 @@
     document.getElementById("btn_annuler_edition").style.display = "none";
     document.getElementById("edit_nouveau_nom").value = "";
     document.getElementById("edit_nouvelle_image").value = "";
+    document.getElementById("edit_nouvelle_info").value = "";
   }
 
   document.getElementById("btn_annuler_edition").addEventListener("click", annulerEditionTheme);
