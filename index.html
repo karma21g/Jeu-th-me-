@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   body { font-family: sans-serif; padding: 20px; }
-  input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
+  input, button, select { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
   button { background: #2196F3; color: white; border: none; border-radius: 8px; }
   .btn-oui { background: #4CAF50; }
   .btn-non { background: #F44336; }
@@ -24,15 +24,53 @@
   #mon_theme { font-size: 1.3em; font-weight: bold; background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
   #choix_action { display: flex; gap: 8px; }
   #choix_action button { flex: 1; }
+  #ecran_admin { display: none; }
+  #btn_admin { width: auto; display: block; margin: 30px auto 0; padding: 4px 10px; font-size: 12px; background: transparent; color: #bbb; border: none; }
+  .carte_theme { display: flex; align-items: center; gap: 10px; background: #eee; padding: 8px; border-radius: 6px; margin: 6px 0; text-align: left; }
+  .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
+  .carte_theme span { flex: 1; }
+  .carte_theme button { width: auto; padding: 6px 10px; margin: 0; background: #F44336; font-size: 13px; }
+  #btn_retour_admin { background: #757575; }
+  #liste_themes_possibles, #historique { display: none; text-align: left; }
+  .boutons_secondaires { display: flex; gap: 6px; }
+  .boutons_secondaires button { flex: 1; }
 </style>
 </head>
 <body>
 
   <div id="ecran_accueil">
     <input type="text" id="edit_pseudo" placeholder="Entre ton pseudo">
+    <p style="text-align:left; margin-bottom:0;">Section (pour creer une salle) :</p>
+    <select id="select_section"></select>
     <button id="btn_creer">Creer une salle</button>
     <input type="text" id="edit_code" placeholder="Code de la salle">
     <button id="btn_rejoindre">Rejoindre</button>
+    <button id="btn_admin">Admin</button>
+  </div>
+
+  <div id="ecran_admin">
+    <h2>Espace administrateur</h2>
+    <div id="admin_connexion">
+      <input type="password" id="edit_mdp_admin" placeholder="Mot de passe">
+      <button id="btn_valider_mdp">Valider</button>
+      <button id="btn_retour_admin">Retour</button>
+    </div>
+    <div id="admin_panneau" style="display:none;">
+      <h3>Ajouter une section</h3>
+      <input type="text" id="edit_nouvelle_section" placeholder="Nom de la section (ex: Fruits)">
+      <button id="btn_ajouter_section">Ajouter la section</button>
+      <h3>Sections actuelles</h3>
+      <div id="liste_sections_admin"></div>
+
+      <h3>Ajouter un theme</h3>
+      <select id="select_section_theme"></select>
+      <input type="text" id="edit_nouveau_nom" placeholder="Nom du theme">
+      <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
+      <button id="btn_ajouter_theme">Ajouter</button>
+      <h3>Themes actuels</h3>
+      <div id="liste_themes_admin"></div>
+      <button id="btn_retour_admin2">Retour</button>
+    </div>
   </div>
 
   <div id="ecran_attente">
@@ -45,9 +83,13 @@
   <div id="ecran_jeu">
     <p>Ton theme secret :</p>
     <div id="mon_theme"></div>
-    <button class="btn-petit" id="btn_historique">Historique</button>
+    <div class="boutons_secondaires">
+      <button class="btn-petit" id="btn_historique">Historique</button>
+      <button class="btn-petit" id="btn_themes_possibles">Themes possibles</button>
+    </div>
     <div id="zone_action"></div>
-    <ul id="historique" style="display:none;"></ul>
+    <ul id="historique"></ul>
+    <div id="liste_themes_possibles"></div>
   </div>
 
   <div id="ecran_fin">
@@ -73,25 +115,31 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  const MDP_ADMIN = "theme2026";
+
+  const SECTIONS_DEFAUT = {
+    s1: { nom: "General" }
+  };
+
   const THEMES_DEFAUT = {
-    t1: { texte: "Abricot", image: "https://i.imgur.com/203zFh4.png" },
-    t2: { texte: "Orange", image: "https://i.imgur.com/gVWG4HB.jpeg" },
-    t3: { texte: "Poire", image: "https://i.imgur.com/rzHnGaq.jpeg" },
-    t4: { texte: "Papaye", image: "https://i.imgur.com/IGs1lcZ.jpeg" },
-    t5: { texte: "Café", image: "https://i.imgur.com/wA4zIcI.jpeg" },
-    t6: { texte: "Cacao", image: "https://i.imgur.com/1HWBovG.jpeg" },
-    t7: { texte: "Cinema", image: "https://i.imgur.com/zEQlNVT.jpeg" },
-    t8: { texte: "Kiwi", image: "https://i.imgur.com/h0QDSCc.png" },
-    t9: { texte: "Madeleine", image: "https://i.imgur.com/QepJzYG.jpeg" },
-    t10: { texte: "Mangue", image: "https://i.imgur.com/tLNkhpQ.jpeg" },
-    t11: { texte: "Chocolat", image: "https://i.imgur.com/Ag2XMA6.png" }
+    t1: { texte: "Abricot", image: "https://i.imgur.com/203zFh4.png", section: "s1" },
+    t2: { texte: "Orange", image: "https://i.imgur.com/gVWG4HB.jpeg", section: "s1" },
+    t3: { texte: "Poire", image: "https://i.imgur.com/rzHnGaq.jpeg", section: "s1" },
+    t4: { texte: "Papaye", image: "https://i.imgur.com/IGs1lcZ.jpeg", section: "s1" },
+    t5: { texte: "Café", image: "https://i.imgur.com/wA4zIcI.jpeg", section: "s1" },
+    t6: { texte: "Cacao", image: "https://i.imgur.com/1HWBovG.jpeg", section: "s1" },
+    t7: { texte: "Cinema", image: "https://i.imgur.com/zEQlNVT.jpeg", section: "s1" },
+    t8: { texte: "Kiwi", image: "https://i.imgur.com/h0QDSCc.png", section: "s1" },
+    t9: { texte: "Madeleine", image: "https://i.imgur.com/QepJzYG.jpeg", section: "s1" },
+    t10: { texte: "Mangue", image: "https://i.imgur.com/tLNkhpQ.jpeg", section: "s1" },
+    t11: { texte: "Chocolat", image: "https://i.imgur.com/Ag2XMA6.png", section: "s1" }
   };
 
   let monCode = "";
   let monPseudo = "";
 
   function afficherEcran(id) {
-    ["ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin"].forEach(e => {
+    ["ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin", "ecran_admin"].forEach(e => {
       document.getElementById(e).style.display = (e === id) ? "block" : "none";
     });
   }
@@ -101,21 +149,52 @@
     document.getElementById("code_affiche").innerText = code;
   }
 
+  async function initSectionsSiVide() {
+    const snap = await get(ref(db, "sections"));
+    if (!snap.val()) {
+      await set(ref(db, "sections"), SECTIONS_DEFAUT);
+    }
+  }
+
+  async function initThemesSiVide() {
+    const snap = await get(ref(db, "themes"));
+    if (!snap.val()) {
+      await set(ref(db, "themes"), THEMES_DEFAUT);
+    }
+  }
+
+  async function chargerSectionsAccueil() {
+    await initSectionsSiVide();
+    const snap = await get(ref(db, "sections"));
+    const data = snap.val() || {};
+    const select = document.getElementById("select_section");
+    select.innerHTML = "";
+    Object.keys(data).forEach(cle => {
+      const option = document.createElement("option");
+      option.value = cle;
+      option.innerText = data[cle].nom;
+      select.appendChild(option);
+    });
+  }
+
   async function assignerThemesSiHote(noms, etat) {
     if (etat.hote !== monPseudo) return;
     if (etat.phase && etat.phase !== "attente") return;
     if (noms.length < 2) return;
 
-    let themesSnap = await get(ref(db, "themes"));
-    let themesData = themesSnap.val();
-    if (!themesData) {
-      await set(ref(db, "themes"), THEMES_DEFAUT);
-      themesData = THEMES_DEFAUT;
+    await initThemesSiVide();
+    const themesSnap = await get(ref(db, "themes"));
+    const themesData = themesSnap.val() || {};
+
+    let themesSection = Object.values(themesData).filter(t => t.section === etat.section);
+    if (themesSection.length < 2) {
+      themesSection = Object.values(themesData);
     }
 
-    const listeThemes = Object.values(themesData);
-    const melange = [...listeThemes].sort(() => Math.random() - 0.5);
+    const melange = [...themesSection].sort(() => Math.random() - 0.5);
     const ordre = [...noms].sort(() => Math.random() - 0.5);
+
+    const themesDisponibles = themesSection.map(t => ({ texte: t.texte, image: t.image || "" }));
 
     const updates = {};
     updates["rooms/" + monCode + "/joueurs/" + noms[0] + "/theme"] = melange[0];
@@ -123,6 +202,7 @@
     updates["rooms/" + monCode + "/etat/ordre"] = ordre;
     updates["rooms/" + monCode + "/etat/tour"] = 0;
     updates["rooms/" + monCode + "/etat/phase"] = "jeu";
+    updates["rooms/" + monCode + "/etat/themesDisponibles"] = themesDisponibles;
     await update(ref(db), updates);
   }
 
@@ -150,11 +230,69 @@
           ? '<span class="badge-oui">Oui</span>'
           : '<span class="badge-non">Non</span>';
         li.innerHTML = item.joueur + ' a demande : ' + item.mot + ' -> ' + badge;
+      } else if (item.type === "indice") {
+        li.innerHTML = '<b>' + item.joueur + '</b> a donne un indice : ' + item.mot;
       } else {
         li.innerHTML = item.joueur + ' a tente de deviner : ' + item.mot + ' -> <span class="badge-non">Rate</span>';
       }
       liste.appendChild(li);
     });
+  }
+
+  function afficherThemesPossibles(liste) {
+    const conteneur = document.getElementById("liste_themes_possibles");
+    conteneur.innerHTML = "";
+    if (!liste || liste.length === 0) {
+      conteneur.innerHTML = "<p>Aucun theme disponible.</p>";
+      return;
+    }
+    liste.forEach(t => {
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.innerHTML = (t.image ? '<img src="' + t.image + '">' : '') + '<span>' + t.texte + '</span>';
+      conteneur.appendChild(div);
+    });
+  }
+
+  function afficherZoneIndice(room, zone) {
+    const etat = room.etat;
+    const indicesRecus = etat.indicesRecus || {};
+    if (indicesRecus[monPseudo]) {
+      zone.innerHTML = "<p>Indice envoye ! En attente de l'autre joueur...</p>";
+      return;
+    }
+    zone.innerHTML =
+      '<p><b>Toutes les 3 questions</b>, donne un indice sur ton theme !</p>' +
+      '<input type="text" id="edit_indice" placeholder="Ton indice">' +
+      '<button id="btn_valider_indice">Envoyer l\'indice</button>';
+    document.getElementById("btn_valider_indice").addEventListener("click", () => envoyerIndice());
+  }
+
+  async function envoyerIndice() {
+    const valeur = document.getElementById("edit_indice").value.trim();
+    if (!valeur) { alert("Ecris un indice !"); return; }
+
+    const historiqueSnap = await get(ref(db, "rooms/" + monCode + "/historique"));
+    const historique = historiqueSnap.val() || {};
+    const prochainIndex = Object.keys(historique).length;
+
+    const updates = {};
+    updates["rooms/" + monCode + "/historique/" + prochainIndex] = { joueur: monPseudo, type: "indice", mot: valeur };
+    updates["rooms/" + monCode + "/etat/indicesRecus/" + monPseudo] = true;
+    await update(ref(db), updates);
+
+    const etatSnap = await get(ref(db, "rooms/" + monCode + "/etat"));
+    const etat = etatSnap.val();
+    const joueursSnap = await get(ref(db, "rooms/" + monCode + "/joueurs"));
+    const noms = Object.keys(joueursSnap.val() || {});
+    const indicesRecus = etat.indicesRecus || {};
+    const tousOnDonne = noms.every(n => indicesRecus[n]);
+    if (tousOnDonne) {
+      const updates2 = {};
+      updates2["rooms/" + monCode + "/etat/phase"] = "jeu";
+      updates2["rooms/" + monCode + "/etat/indicesRecus"] = null;
+      await update(ref(db), updates2);
+    }
   }
 
   function afficherEcranJeu(room) {
@@ -166,10 +304,17 @@
 
     afficherTheme(joueurs[monPseudo].theme);
     afficherHistorique(room.historique || {});
+    afficherThemesPossibles(etat.themesDisponibles || []);
+
+    const zone = document.getElementById("zone_action");
+
+    if (etat.phase === "indice") {
+      afficherZoneIndice(room, zone);
+      return;
+    }
 
     const joueurActif = etat.ordre[etat.tour % 2];
     const action = room.actionCourante;
-    const zone = document.getElementById("zone_action");
 
     if (action && action.joueur !== monPseudo) {
       if (action.type === "guess") {
@@ -188,24 +333,42 @@
       zone.innerHTML =
         '<div id="choix_action"><button id="btn_poser">Poser une question</button><button id="btn_deviner">Deviner</button></div>' +
         '<input type="text" id="edit_saisie" placeholder="Ton mot / ta reponse" style="display:none;">' +
+        '<select id="select_deviner" style="display:none;"></select>' +
         '<button id="btn_valider" style="display:none;">Valider</button>';
+
+      const selectDeviner = document.getElementById("select_deviner");
+      selectDeviner.innerHTML = '<option value="">-- Choisis un theme --</option>';
+      (etat.themesDisponibles || []).forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.texte;
+        opt.innerText = t.texte;
+        selectDeviner.appendChild(opt);
+      });
 
       let modeActuel = "";
       document.getElementById("btn_poser").addEventListener("click", () => {
         modeActuel = "question";
         document.getElementById("edit_saisie").style.display = "block";
+        document.getElementById("select_deviner").style.display = "none";
         document.getElementById("btn_valider").style.display = "block";
       });
       document.getElementById("btn_deviner").addEventListener("click", () => {
         modeActuel = "guess";
-        document.getElementById("edit_saisie").style.display = "block";
+        document.getElementById("edit_saisie").style.display = "none";
+        document.getElementById("select_deviner").style.display = "block";
         document.getElementById("btn_valider").style.display = "block";
       });
       document.getElementById("btn_valider").addEventListener("click", () => {
-        const valeur = document.getElementById("edit_saisie").value.trim();
-        if (!valeur) { alert("Ecris quelque chose !"); return; }
-        if (modeActuel === "question") poserQuestion(valeur);
-        if (modeActuel === "guess") proposerDevinette(valeur);
+        if (modeActuel === "question") {
+          const valeur = document.getElementById("edit_saisie").value.trim();
+          if (!valeur) { alert("Ecris quelque chose !"); return; }
+          poserQuestion(valeur);
+        }
+        if (modeActuel === "guess") {
+          const valeur = document.getElementById("select_deviner").value;
+          if (!valeur) { alert("Choisis un theme !"); return; }
+          proposerDevinette(valeur);
+        }
       });
     } else {
       zone.innerHTML = '<p>En attente de <b>' + joueurActif + '</b>...</p>';
@@ -233,6 +396,15 @@
     updates["rooms/" + monCode + "/historique/" + prochainIndex] = { joueur: action.joueur, type: "question", mot: action.mot, reponse: reponse };
     updates["rooms/" + monCode + "/actionCourante"] = null;
     updates["rooms/" + monCode + "/etat/tour"] = etat.tour + 1;
+
+    const nbQuestions = Object.values(historique).filter(h => h.type === "question").length + 1;
+    const dernierSeuil = etat.dernierSeuilIndice || 0;
+    if (nbQuestions >= dernierSeuil + 3) {
+      updates["rooms/" + monCode + "/etat/phase"] = "indice";
+      updates["rooms/" + monCode + "/etat/dernierSeuilIndice"] = dernierSeuil + 3;
+      updates["rooms/" + monCode + "/etat/indicesRecus"] = {};
+    }
+
     await update(ref(db), updates);
   }
 
@@ -289,7 +461,7 @@
         });
         document.getElementById("statut_attente").innerText = noms.length + " / 2 joueurs connectes";
         if (noms.length >= 2) await assignerThemesSiHote(noms, etat);
-      } else if (etat.phase === "jeu") {
+      } else if (etat.phase === "jeu" || etat.phase === "indice") {
         afficherEcranJeu(room);
       } else if (etat.phase === "fini") {
         afficherFin(room);
@@ -300,10 +472,12 @@
   document.getElementById("btn_creer").addEventListener("click", async () => {
     monPseudo = document.getElementById("edit_pseudo").value.trim();
     if (!monPseudo) { alert("Entre un pseudo d'abord !"); return; }
+    const sectionChoisie = document.getElementById("select_section").value;
+    if (!sectionChoisie) { alert("Choisis une section !"); return; }
 
     monCode = String(Math.floor(1000 + Math.random() * 9000));
     await set(ref(db, "rooms/" + monCode + "/joueurs/" + monPseudo), { pret: true });
-    await set(ref(db, "rooms/" + monCode + "/etat"), { phase: "attente", hote: monPseudo });
+    await set(ref(db, "rooms/" + monCode + "/etat"), { phase: "attente", hote: monPseudo, section: sectionChoisie });
 
     afficherSalleAttente(monCode);
     ecouterSalle(monCode);
@@ -330,14 +504,142 @@
     h.style.display = (h.style.display === "none") ? "block" : "none";
   });
 
+  document.getElementById("btn_themes_possibles").addEventListener("click", () => {
+    const c = document.getElementById("liste_themes_possibles");
+    c.style.display = (c.style.display === "none") ? "block" : "none";
+  });
+
   document.getElementById("btn_rejouer").addEventListener("click", async () => {
     const updates = {};
     updates["rooms/" + monCode + "/etat/phase"] = "attente";
     updates["rooms/" + monCode + "/etat/gagnant"] = null;
+    updates["rooms/" + monCode + "/etat/dernierSeuilIndice"] = null;
+    updates["rooms/" + monCode + "/etat/indicesRecus"] = null;
+    updates["rooms/" + monCode + "/etat/themesDisponibles"] = null;
     updates["rooms/" + monCode + "/historique"] = null;
     updates["rooms/" + monCode + "/actionCourante"] = null;
     await update(ref(db), updates);
   });
+
+  // --- Espace admin ---
+
+  async function chargerSectionsAdmin() {
+    const snap = await get(ref(db, "sections"));
+    const data = snap.val() || {};
+    const conteneur = document.getElementById("liste_sections_admin");
+    conteneur.innerHTML = "";
+    const selectTheme = document.getElementById("select_section_theme");
+    selectTheme.innerHTML = "";
+    const cles = Object.keys(data);
+    if (cles.length === 0) {
+      conteneur.innerHTML = "<p>Aucune section pour le moment.</p>";
+    }
+    cles.forEach(cle => {
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.innerHTML = '<span>' + data[cle].nom + '</span><button data-cle="' + cle + '">Supprimer</button>';
+      div.querySelector("button").addEventListener("click", async () => {
+        await set(ref(db, "sections/" + cle), null);
+        chargerSectionsAdmin();
+      });
+      conteneur.appendChild(div);
+
+      const opt = document.createElement("option");
+      opt.value = cle;
+      opt.innerText = data[cle].nom;
+      selectTheme.appendChild(opt);
+    });
+  }
+
+  async function chargerThemesAdmin() {
+    const themesSnap = await get(ref(db, "themes"));
+    const sectionsSnap = await get(ref(db, "sections"));
+    const themesData = themesSnap.val() || {};
+    const sectionsData = sectionsSnap.val() || {};
+    const conteneur = document.getElementById("liste_themes_admin");
+    conteneur.innerHTML = "";
+    const cles = Object.keys(themesData);
+    if (cles.length === 0) {
+      conteneur.innerHTML = "<p>Aucun theme pour le moment.</p>";
+      return;
+    }
+    cles.forEach(cle => {
+      const theme = themesData[cle];
+      const nomSection = sectionsData[theme.section] ? sectionsData[theme.section].nom : "?";
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.innerHTML =
+        (theme.image ? '<img src="' + theme.image + '">' : '') +
+        '<span>' + theme.texte + ' (' + nomSection + ')</span>' +
+        '<button data-cle="' + cle + '">Supprimer</button>';
+      div.querySelector("button").addEventListener("click", async () => {
+        await set(ref(db, "themes/" + cle), null);
+        chargerThemesAdmin();
+      });
+      conteneur.appendChild(div);
+    });
+  }
+
+  document.getElementById("btn_admin").addEventListener("click", () => {
+    afficherEcran("ecran_admin");
+    document.getElementById("admin_connexion").style.display = "block";
+    document.getElementById("admin_panneau").style.display = "none";
+    document.getElementById("edit_mdp_admin").value = "";
+  });
+
+  document.getElementById("btn_valider_mdp").addEventListener("click", async () => {
+    const mdp = document.getElementById("edit_mdp_admin").value;
+    if (mdp !== MDP_ADMIN) { alert("Mot de passe incorrect !"); return; }
+    document.getElementById("admin_connexion").style.display = "none";
+    document.getElementById("admin_panneau").style.display = "block";
+    await chargerSectionsAdmin();
+    await chargerThemesAdmin();
+  });
+
+  document.getElementById("btn_retour_admin").addEventListener("click", () => {
+    afficherEcran("ecran_accueil");
+  });
+
+  document.getElementById("btn_retour_admin2").addEventListener("click", () => {
+    afficherEcran("ecran_accueil");
+  });
+
+  document.getElementById("btn_ajouter_section").addEventListener("click", async () => {
+    const nom = document.getElementById("edit_nouvelle_section").value.trim();
+    if (!nom) { alert("Entre un nom de section !"); return; }
+
+    const snap = await get(ref(db, "sections"));
+    const data = snap.val() || {};
+    const cles = Object.keys(data).map(c => parseInt(c.replace("s", ""), 10)).filter(n => !isNaN(n));
+    const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
+
+    await set(ref(db, "sections/s" + prochainNum), { nom: nom });
+
+    document.getElementById("edit_nouvelle_section").value = "";
+    chargerSectionsAdmin();
+  });
+
+  document.getElementById("btn_ajouter_theme").addEventListener("click", async () => {
+    const nom = document.getElementById("edit_nouveau_nom").value.trim();
+    const image = document.getElementById("edit_nouvelle_image").value.trim();
+    const sectionChoisie = document.getElementById("select_section_theme").value;
+    if (!nom) { alert("Entre un nom de theme !"); return; }
+    if (!sectionChoisie) { alert("Cree d'abord une section !"); return; }
+
+    const snap = await get(ref(db, "themes"));
+    const themesData = snap.val() || {};
+    const cles = Object.keys(themesData).map(c => parseInt(c.replace("t", ""), 10)).filter(n => !isNaN(n));
+    const prochainNum = cles.length > 0 ? Math.max(...cles) + 1 : 1;
+    const nouvelleCle = "t" + prochainNum;
+
+    await set(ref(db, "themes/" + nouvelleCle), { texte: nom, image: image, section: sectionChoisie });
+
+    document.getElementById("edit_nouveau_nom").value = "";
+    document.getElementById("edit_nouvelle_image").value = "";
+    chargerThemesAdmin();
+  });
+
+  chargerSectionsAccueil();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
