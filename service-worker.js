@@ -1,4 +1,4 @@
-const CACHE_NAME = "devine-le-theme-v8";
+const CACHE_NAME = "jeux-themes-v1";
 const FICHIERS_A_CACHER = [
   "./index.html",
   "./manifest.json",
@@ -27,15 +27,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Ne jamais mettre en cache les appels vers Firebase : on veut toujours
-  // les donnees en temps reel, jamais une version en cache.
+  // Ne jamais mettre en cache les appels vers Firebase : les jeux 2 et 3
+  // gerent eux-memes leur cache de donnees via localStorage pour un
+  // controle plus fin (mise a jour manuelle, mode hors ligne).
   if (event.request.url.includes("firebaseio.com") || event.request.url.includes("googleapis.com")) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((reponseEnCache) => {
-      return reponseEnCache || fetch(event.request);
+      return reponseEnCache || fetch(event.request).catch(() => reponseEnCache);
     })
   );
 });

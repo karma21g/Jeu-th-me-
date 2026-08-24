@@ -1,7 +1,7 @@
 {
-  "name": "Devine le theme",
-  "short_name": "DevineLeTheme",
-  "description": "Jeu a 2 joueurs : devine le theme secret de ton adversaire",
+  "name": "Jeux de Themes",
+  "short_name": "JeuxThemes",
+  "description": "Devine le mot, Quiz, et Regions de Madagascar",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

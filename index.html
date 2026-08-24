@@ -3,19 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevineLeTheme</title>
+<title>Jeux de Themes</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2196F3">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   body { font-family: sans-serif; padding: 20px; }
-  input, button, select { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
+  input, button, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; font-family: inherit; }
   button { background: #2196F3; color: white; border: none; border-radius: 8px; }
   .btn-oui { background: #4CAF50; }
   .btn-non { background: #F44336; }
   .btn-petit { width: auto; display: inline-block; padding: 6px 14px; font-size: 14px; background: #757575; }
-  #ecran_attente, #ecran_jeu, #ecran_fin { display: none; text-align: center; }
+  #ecran_accueil, #ecran_attente, #ecran_jeu, #ecran_fin, #ecran_admin, #ecran_proposition,
+  #ecran_accueil_quiz, #ecran_quiz, #ecran_accueil_regions, #ecran_jeu_regions { display: none; text-align: center; }
   #code_affiche { font-size: 2em; font-weight: bold; margin: 20px 0; }
   #liste_joueurs, #historique { list-style: none; padding: 0; text-align: left; }
   #liste_joueurs li, #historique li { padding: 8px; background: #eee; margin: 4px 0; border-radius: 6px; }
@@ -24,22 +25,49 @@
   #mon_theme { font-size: 1.3em; font-weight: bold; background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
   #choix_action { display: flex; gap: 8px; }
   #choix_action button { flex: 1; }
-  #ecran_admin { display: none; }
-  #btn_admin { width: auto; display: block; margin: 30px auto 0; padding: 4px 10px; font-size: 12px; background: transparent; color: #bbb; border: none; }
   .carte_theme { display: flex; align-items: center; gap: 10px; background: #eee; padding: 8px; border-radius: 6px; margin: 6px 0; text-align: left; }
   .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
   .carte_theme span { flex: 1; }
   .carte_theme button { width: auto; padding: 6px 10px; margin: 0; background: #F44336; font-size: 13px; }
   .carte_theme .btn-modifier { background: #FF9800; margin-right: 6px; }
-  #btn_annuler_edition { background: #757575; display: none; }
-  #btn_retour_admin { background: #757575; }
+  .carte_theme .btn-valider-prop { background: #4CAF50; margin-right: 6px; }
   #liste_themes_possibles, #historique { display: none; text-align: left; }
   .boutons_secondaires { display: flex; gap: 6px; }
   .boutons_secondaires button { flex: 1; }
+  #btn_admin_menu { width: auto; display: block; margin: 30px auto 0; padding: 4px 10px; font-size: 12px; background: transparent; color: #bbb; border: none; }
+  .btn-menu-jeu { padding: 20px; font-size: 18px; margin: 10px 0; }
+  .bloc_admin_jeu { border: 2px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 18px 0; }
+  .titre_bloc_jeu { background: #2196F3; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
+  .titre_bloc_jeu2 { background: #009688; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
+  .case_region { display: flex; align-items: center; gap: 8px; padding: 6px; background: #eee; margin: 3px 0; border-radius: 6px; text-align: left; }
+  .case_region input { width: auto; margin: 0; }
+  .case_region label { flex: 1; }
+  #cases_regions_jeu { text-align: left; }
+  #cases_regions_jeu .case_region.correct { background: #c8e6c9; }
+  #cases_regions_jeu .case_region.incorrect { background: #ffcdd2; }
+  #apercu_photo_proposition { max-width: 180px; max-height: 180px; border-radius: 8px; display: none; margin: 8px auto; }
+  #image_critere_jeu { max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin: 0 auto 10px; }
+  #image_quiz { max-width: 220px; max-height: 220px; border-radius: 8px; display: block; margin: 0 auto 14px; }
+  #etat_connexion_quiz { font-size: 13px; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 4px; }
+  .connexion-ok { background: #e8f5e9; color: #2e7d32; }
+  .connexion-off { background: #fff3e0; color: #e65100; }
+  #btn_suivant_quiz { background: #4CAF50; display: none; }
+  #btn_suivant_regions { background: #4CAF50; display: none; }
+  #score_quiz, #score_regions { font-size: 1.2em; font-weight: bold; }
 </style>
 </head>
 <body>
 
+  <!-- ============ MENU PRINCIPAL ============ -->
+  <div id="ecran_menu_principal">
+    <h2 style="text-align:center;">Choisis un jeu</h2>
+    <button class="btn-menu-jeu" id="btn_menu_devine">Devine le mot</button>
+    <button class="btn-menu-jeu" id="btn_menu_quiz" style="background:#009688;">Quiz</button>
+    <button class="btn-menu-jeu" id="btn_menu_regions" style="background:#FF9800;">Regions de Madagascar</button>
+    <button id="btn_admin_menu">Admin</button>
+  </div>
+
+  <!-- ============ JEU 1 : DEVINE LE MOT ============ -->
   <div id="ecran_accueil">
     <input type="text" id="edit_pseudo" placeholder="Entre ton pseudo">
     <p style="text-align:left; margin-bottom:0;">Section (pour creer une salle) :</p>
@@ -47,35 +75,7 @@
     <button id="btn_creer">Creer une salle</button>
     <input type="text" id="edit_code" placeholder="Code de la salle">
     <button id="btn_rejoindre">Rejoindre</button>
-    <button id="btn_admin">Admin</button>
-  </div>
-
-  <div id="ecran_admin">
-    <h2>Espace administrateur</h2>
-    <div id="admin_connexion">
-      <input type="password" id="edit_mdp_admin" placeholder="Mot de passe">
-      <button id="btn_valider_mdp">Valider</button>
-      <button id="btn_retour_admin">Retour</button>
-    </div>
-    <div id="admin_panneau" style="display:none;">
-      <h3>Ajouter une section</h3>
-      <input type="text" id="edit_nouvelle_section" placeholder="Nom de la section (ex: Fruits)">
-      <button id="btn_ajouter_section">Ajouter la section</button>
-      <h3>Sections actuelles</h3>
-      <div id="liste_sections_admin"></div>
-
-      <h3>Ajouter un theme</h3>
-      <p style="margin:4px 0; font-size:13px; color:#666;">Cette section choisie sert aussi a filtrer la liste ci-dessous.</p>
-      <select id="select_section_theme"></select>
-      <input type="text" id="edit_nouveau_nom" placeholder="Nom du theme">
-      <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
-      <textarea id="edit_nouvelle_info" placeholder="Information sur le theme (optionnel, ex: explication, definition...)" rows="3" style="width:100%; padding:12px; margin:8px 0; font-size:16px; box-sizing:border-box; font-family:inherit;"></textarea>
-      <button id="btn_ajouter_theme">Ajouter</button>
-      <button id="btn_annuler_edition">Annuler la modification</button>
-      <h3>Themes actuels</h3>
-      <div id="liste_themes_admin"></div>
-      <button id="btn_retour_admin2">Retour</button>
-    </div>
+    <button class="btn-petit" id="btn_retour_menu1">Retour au menu</button>
   </div>
 
   <div id="ecran_attente">
@@ -86,13 +86,13 @@
   </div>
 
   <div id="ecran_jeu">
-    <p>Ton theme secret :</p>
+    <p>Ton mot secret :</p>
     <button class="btn-petit" id="btn_info_theme" style="background:#FF9800;">Informations</button>
     <div id="info_theme" style="display:none; text-align:left; background:#fff3e0; padding:10px; border-radius:8px; margin:8px 0;"></div>
     <div id="mon_theme"></div>
     <div class="boutons_secondaires">
       <button class="btn-petit" id="btn_historique">Historique</button>
-      <button class="btn-petit" id="btn_themes_possibles">Themes possibles</button>
+      <button class="btn-petit" id="btn_themes_possibles">Mots possibles</button>
     </div>
     <div id="zone_action"></div>
     <ul id="historique"></ul>
@@ -103,6 +103,122 @@
     <h2 id="message_fin"></h2>
     <p id="themes_reveles"></p>
     <button id="btn_rejouer">Rejouer</button>
+    <button id="btn_proposer_mot" style="background:#FF9800;">Proposer un mot</button>
+    <button class="btn-petit" id="btn_retour_menu_fin">Retour au menu</button>
+  </div>
+
+  <!-- ============ PROPOSITION D'UN MOT PAR UN JOUEUR ============ -->
+  <div id="ecran_proposition">
+    <h2>Proposer un mot</h2>
+    <input type="text" id="edit_pseudo_proposition" placeholder="Ton pseudo">
+    <select id="select_section_proposition"></select>
+    <input type="text" id="edit_nom_proposition" placeholder="Nom du mot">
+    <p style="text-align:left; margin-bottom:0;">Photo :</p>
+    <input type="file" id="edit_photo_proposition" accept="image/*">
+    <img id="apercu_photo_proposition">
+    <textarea id="edit_info_proposition" placeholder="Information (optionnel)" rows="3"></textarea>
+    <button id="btn_envoyer_proposition">Envoyer la proposition</button>
+    <button class="btn-petit" id="btn_annuler_proposition">Annuler</button>
+  </div>
+
+  <!-- ============ ESPACE ADMIN ============ -->
+  <div id="ecran_admin">
+    <h2>Espace administrateur</h2>
+    <div id="admin_connexion">
+      <input type="password" id="edit_mdp_admin" placeholder="Mot de passe">
+      <button id="btn_valider_mdp">Valider</button>
+      <button class="btn-petit" id="btn_retour_admin">Retour</button>
+    </div>
+    <div id="admin_panneau" style="display:none;">
+
+      <div class="bloc_admin_jeu">
+        <h3 class="titre_bloc_jeu">Jeu 1 &amp; 2 : Devine le mot / Quiz</h3>
+
+        <h4>Propositions en attente</h4>
+        <div id="liste_propositions_admin"></div>
+
+        <h4>Ajouter une section</h4>
+        <input type="text" id="edit_nouvelle_section" placeholder="Nom de la section (ex: Fruits)">
+        <button id="btn_ajouter_section">Ajouter la section</button>
+        <h4>Sections actuelles</h4>
+        <div id="liste_sections_admin"></div>
+
+        <h4>Ajouter un mot</h4>
+        <select id="select_section_theme"></select>
+        <input type="text" id="edit_nouveau_nom" placeholder="Nom du mot">
+        <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
+        <textarea id="edit_nouvelle_info" placeholder="Information sur le mot (optionnel)" rows="3"></textarea>
+        <button id="btn_ajouter_theme">Ajouter</button>
+        <button class="btn-petit" id="btn_annuler_edition">Annuler la modification</button>
+        <h4>Mots actuels</h4>
+        <p style="margin:4px 0; font-size:13px; color:#666;">Filtrer par section :</p>
+        <select id="select_filtre_themes"></select>
+        <div id="liste_themes_admin"></div>
+      </div>
+
+      <div class="bloc_admin_jeu">
+        <h3 class="titre_bloc_jeu2">Jeu 3 : Regions de Madagascar</h3>
+
+        <h4>Ajouter une region</h4>
+        <input type="text" id="edit_nouvelle_region" placeholder="Nom de la region">
+        <button id="btn_ajouter_region" style="background:#FF9800;">Ajouter la region</button>
+        <button class="btn-petit" id="btn_annuler_edition_region">Annuler la modification</button>
+        <h4>Regions actuelles</h4>
+        <div id="liste_regions_admin"></div>
+
+        <h4>Ajouter un critere</h4>
+        <input type="text" id="edit_nouveau_critere" placeholder="Texte du critere (ex: Regions cotieres)">
+        <input type="text" id="edit_image_critere" placeholder="Lien de l'image (optionnel)">
+        <p style="text-align:left; margin-bottom:0;">Coche les regions concernees :</p>
+        <div id="cases_regions_critere"></div>
+        <button id="btn_ajouter_critere" style="background:#FF9800;">Ajouter le critere</button>
+        <button class="btn-petit" id="btn_annuler_edition_critere">Annuler la modification</button>
+        <h4>Criteres actuels</h4>
+        <div id="liste_criteres_admin"></div>
+      </div>
+
+      <button class="btn-petit" id="btn_retour_admin2">Retour</button>
+    </div>
+  </div>
+
+  <!-- ============ JEU 2 : QUIZ ============ -->
+  <div id="ecran_accueil_quiz">
+    <h2 style="text-align:center;">Quiz : devine le mot</h2>
+    <p id="etat_connexion_quiz"></p>
+    <p style="text-align:left; margin-bottom:0;">Choisis une section :</p>
+    <select id="select_section_quiz"></select>
+    <button id="btn_jouer_quiz" style="background:#009688;">Jouer</button>
+    <button id="btn_maj_donnees_quiz" class="btn-petit">Mettre a jour les donnees</button>
+    <button class="btn-petit" id="btn_retour_menu_quiz">Retour au menu</button>
+  </div>
+
+  <div id="ecran_quiz">
+    <p id="score_quiz">Score : 0 / 0</p>
+    <img id="image_quiz">
+    <div id="options_quiz"></div>
+    <div id="feedback_quiz"></div>
+    <button id="btn_suivant_quiz">Question suivante</button>
+    <button class="btn-petit" id="btn_quitter_quiz">Quitter</button>
+  </div>
+
+  <!-- ============ JEU 3 : REGIONS DE MADAGASCAR ============ -->
+  <div id="ecran_accueil_regions">
+    <h2 style="text-align:center;">Regions de Madagascar</h2>
+    <p id="etat_connexion_regions"></p>
+    <button id="btn_jouer_regions" style="background:#FF9800;">Jouer</button>
+    <button id="btn_maj_donnees_regions" class="btn-petit">Mettre a jour les donnees</button>
+    <button class="btn-petit" id="btn_retour_menu_regions">Retour au menu</button>
+  </div>
+
+  <div id="ecran_jeu_regions">
+    <p id="score_regions">Score : 0 / 0</p>
+    <h3 id="texte_critere_jeu"></h3>
+    <img id="image_critere_jeu" style="display:none;">
+    <div id="cases_regions_jeu"></div>
+    <button id="btn_valider_regions" style="background:#4CAF50;">Valider</button>
+    <div id="feedback_regions"></div>
+    <button id="btn_suivant_regions">Question suivante</button>
+    <button class="btn-petit" id="btn_quitter_regions">Quitter</button>
   </div>
 
   <canvas id="canvas_feu" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
@@ -126,10 +242,7 @@
 
   const MDP_ADMIN = "theme2026";
 
-  const SECTIONS_DEFAUT = {
-    s1: { nom: "General" }
-  };
-
+  const SECTIONS_DEFAUT = { s1: { nom: "General" } };
   const THEMES_DEFAUT = {
     t1: { texte: "Abricot", image: "https://i.imgur.com/203zFh4.png", section: "s1" },
     t2: { texte: "Orange", image: "https://i.imgur.com/gVWG4HB.jpeg", section: "s1" },
@@ -147,12 +260,65 @@
   let monCode = "";
   let monPseudo = "";
   let cleThemeEnEdition = null;
+  let cleRegionEnEdition = null;
+  let cleCritereEnEdition = null;
+  let imageProposCompressee = "";
+
+  // ============ NAVIGATION GENERALE ============
 
   function afficherEcran(id) {
-    ["ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin", "ecran_admin"].forEach(e => {
+    [
+      "ecran_menu_principal", "ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin",
+      "ecran_proposition", "ecran_admin", "ecran_accueil_quiz", "ecran_quiz",
+      "ecran_accueil_regions", "ecran_jeu_regions"
+    ].forEach(e => {
       document.getElementById(e).style.display = (e === id) ? "block" : "none";
     });
   }
+
+  document.getElementById("btn_menu_devine").addEventListener("click", () => {
+    afficherEcran("ecran_accueil");
+  });
+  document.getElementById("btn_retour_menu1").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+  document.getElementById("btn_retour_menu_fin").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_menu_quiz").addEventListener("click", () => {
+    afficherEcran("ecran_accueil_quiz");
+  });
+  document.getElementById("btn_retour_menu_quiz").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_menu_regions").addEventListener("click", () => {
+    afficherEcran("ecran_accueil_regions");
+  });
+  document.getElementById("btn_retour_menu_regions").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_admin_menu").addEventListener("click", () => {
+    afficherEcran("ecran_admin");
+    document.getElementById("admin_connexion").style.display = "block";
+    document.getElementById("admin_panneau").style.display = "none";
+    document.getElementById("edit_mdp_admin").value = "";
+  });
+  document.getElementById("btn_retour_admin").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+  document.getElementById("btn_retour_admin2").addEventListener("click", () => {
+    annulerEditionTheme();
+    annulerEditionRegion();
+    annulerEditionCritere();
+    afficherEcran("ecran_menu_principal");
+  });
+
+  // ============================================================
+  // ============ JEU 1 : DEVINE LE MOT (multijoueur) ===========
+  // ============================================================
 
   function afficherSalleAttente(code) {
     afficherEcran("ecran_attente");
@@ -161,16 +327,12 @@
 
   async function initSectionsSiVide() {
     const snap = await get(ref(db, "sections"));
-    if (!snap.val()) {
-      await set(ref(db, "sections"), SECTIONS_DEFAUT);
-    }
+    if (!snap.val()) await set(ref(db, "sections"), SECTIONS_DEFAUT);
   }
 
   async function initThemesSiVide() {
     const snap = await get(ref(db, "themes"));
-    if (!snap.val()) {
-      await set(ref(db, "themes"), THEMES_DEFAUT);
-    }
+    if (!snap.val()) await set(ref(db, "themes"), THEMES_DEFAUT);
   }
 
   async function chargerSectionsAccueil() {
@@ -197,13 +359,10 @@
     const themesData = themesSnap.val() || {};
 
     let themesSection = Object.values(themesData).filter(t => t.section === etat.section);
-    if (themesSection.length < 2) {
-      themesSection = Object.values(themesData);
-    }
+    if (themesSection.length < 2) themesSection = Object.values(themesData);
 
     const melange = [...themesSection].sort(() => Math.random() - 0.5);
     const ordre = [...noms].sort(() => Math.random() - 0.5);
-
     const themesDisponibles = themesSection.map(t => ({ texte: t.texte, image: t.image || "" }));
 
     const updates = {};
@@ -220,16 +379,10 @@
     const div = document.getElementById("mon_theme");
     if (!theme) { div.innerHTML = ""; document.getElementById("info_theme").innerHTML = ""; return; }
     let html = "";
-    if (theme.image) {
-      html += '<img src="' + theme.image + '" style="max-width:180px;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px;">';
-    }
-    if (theme.texte) {
-      html += '<div>' + theme.texte + '</div>';
-    }
+    if (theme.image) html += '<img src="' + theme.image + '" style="max-width:180px;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px;">';
+    if (theme.texte) html += '<div>' + theme.texte + '</div>';
     div.innerHTML = html;
-
-    const infoDiv = document.getElementById("info_theme");
-    infoDiv.innerHTML = theme.info ? theme.info : "Aucune information disponible pour ce theme.";
+    document.getElementById("info_theme").innerHTML = theme.info ? theme.info : "Aucune information disponible pour ce mot.";
   }
 
   function afficherHistorique(historique) {
@@ -239,9 +392,7 @@
       const item = historique[k];
       const li = document.createElement("li");
       if (item.type === "question") {
-        const badge = item.reponse === "oui"
-          ? '<span class="badge-oui">Oui</span>'
-          : '<span class="badge-non">Non</span>';
+        const badge = item.reponse === "oui" ? '<span class="badge-oui">Oui</span>' : '<span class="badge-non">Non</span>';
         li.innerHTML = item.joueur + ' a demande : ' + item.mot + ' -> ' + badge;
       } else if (item.type === "indice") {
         li.innerHTML = '<b>' + item.joueur + '</b> a donne un indice : ' + item.mot;
@@ -255,10 +406,7 @@
   function afficherThemesPossibles(liste) {
     const conteneur = document.getElementById("liste_themes_possibles");
     conteneur.innerHTML = "";
-    if (!liste || liste.length === 0) {
-      conteneur.innerHTML = "<p>Aucun theme disponible.</p>";
-      return;
-    }
+    if (!liste || liste.length === 0) { conteneur.innerHTML = "<p>Aucun mot disponible.</p>"; return; }
     liste.forEach(t => {
       const div = document.createElement("div");
       div.className = "carte_theme";
@@ -270,12 +418,9 @@
   function afficherZoneIndice(room, zone) {
     const etat = room.etat;
     const indicesRecus = etat.indicesRecus || {};
-    if (indicesRecus[monPseudo]) {
-      zone.innerHTML = "<p>Indice envoye ! En attente de l'autre joueur...</p>";
-      return;
-    }
+    if (indicesRecus[monPseudo]) { zone.innerHTML = "<p>Indice envoye ! En attente de l'autre joueur...</p>"; return; }
     zone.innerHTML =
-      '<p><b>Toutes les 6 questions</b>, donne un indice sur ton theme !</p>' +
+      '<p><b>Toutes les 6 questions</b>, donne un indice sur ton mot !</p>' +
       '<input type="text" id="edit_indice" placeholder="Ton indice">' +
       '<button id="btn_valider_indice">Envoyer l\'indice</button>';
     document.getElementById("btn_valider_indice").addEventListener("click", () => envoyerIndice());
@@ -299,45 +444,38 @@
     const joueursSnap = await get(ref(db, "rooms/" + monCode + "/joueurs"));
     const noms = Object.keys(joueursSnap.val() || {});
     const indicesRecus = etat.indicesRecus || {};
-    const tousOnDonne = noms.every(n => indicesRecus[n]);
-    if (tousOnDonne) {
-      const updates2 = {};
-      updates2["rooms/" + monCode + "/etat/phase"] = "jeu";
-      updates2["rooms/" + monCode + "/etat/indicesRecus"] = null;
-      await update(ref(db), updates2);
+    if (noms.every(n => indicesRecus[n])) {
+      await update(ref(db), {
+        ["rooms/" + monCode + "/etat/phase"]: "jeu",
+        ["rooms/" + monCode + "/etat/indicesRecus"]: null
+      });
     }
   }
 
   function afficherEcranJeu(room) {
     afficherEcran("ecran_jeu");
-
     const etat = room.etat;
     const joueurs = room.joueurs;
-    const noms = Object.keys(joueurs);
 
     afficherTheme(joueurs[monPseudo].theme);
     afficherHistorique(room.historique || {});
     afficherThemesPossibles(etat.themesDisponibles || []);
 
     const zone = document.getElementById("zone_action");
-
-    if (etat.phase === "indice") {
-      afficherZoneIndice(room, zone);
-      return;
-    }
+    if (etat.phase === "indice") { afficherZoneIndice(room, zone); return; }
 
     const joueurActif = etat.ordre[etat.tour % 2];
     const action = room.actionCourante;
 
     if (action && action.joueur !== monPseudo) {
       if (action.type === "guess") {
-        zone.innerHTML = '<p><b>' + action.joueur + '</b> pense que ton theme est : <b>' + action.mot + '</b></p>' +
+        zone.innerHTML = '<p><b>' + action.joueur + '</b> pense que ton mot est : <b>' + action.mot + '</b></p>' +
           '<button class="btn-oui" id="btn_correct">Oui, il a devine juste</button>' +
           '<button class="btn-non" id="btn_incorrect">Non, ce n\'est pas ca</button>';
         document.getElementById("btn_correct").addEventListener("click", () => confirmerDevinette(true));
         document.getElementById("btn_incorrect").addEventListener("click", () => confirmerDevinette(false));
       } else {
-        zone.innerHTML = '<p><b>' + action.joueur + '</b> te demande : ' + action.mot + ' - est-ce lie a ton theme ?</p>' +
+        zone.innerHTML = '<p><b>' + action.joueur + '</b> te demande : ' + action.mot + ' - est-ce lie a ton mot ?</p>' +
           '<button class="btn-oui" id="btn_oui">Oui</button><button class="btn-non" id="btn_non">Non</button>';
         document.getElementById("btn_oui").addEventListener("click", () => repondre("oui"));
         document.getElementById("btn_non").addEventListener("click", () => repondre("non"));
@@ -350,7 +488,7 @@
         '<button id="btn_valider" style="display:none;">Valider</button>';
 
       const selectDeviner = document.getElementById("select_deviner");
-      selectDeviner.innerHTML = '<option value="">-- Choisis un theme --</option>';
+      selectDeviner.innerHTML = '<option value="">-- Choisis un mot --</option>';
       (etat.themesDisponibles || []).forEach(t => {
         const opt = document.createElement("option");
         opt.value = t.texte;
@@ -379,7 +517,7 @@
         }
         if (modeActuel === "guess") {
           const valeur = document.getElementById("select_deviner").value;
-          if (!valeur) { alert("Choisis un theme !"); return; }
+          if (!valeur) { alert("Choisis un mot !"); return; }
           proposerDevinette(valeur);
         }
       });
@@ -391,7 +529,6 @@
   async function poserQuestion(mot) {
     await set(ref(db, "rooms/" + monCode + "/actionCourante"), { joueur: monPseudo, mot: mot, type: "question" });
   }
-
   async function proposerDevinette(devinette) {
     await set(ref(db, "rooms/" + monCode + "/actionCourante"), { joueur: monPseudo, mot: devinette, type: "guess" });
   }
@@ -417,7 +554,6 @@
       updates["rooms/" + monCode + "/etat/dernierSeuilIndice"] = dernierSeuil + 6;
       updates["rooms/" + monCode + "/etat/indicesRecus"] = {};
     }
-
     await update(ref(db), updates);
   }
 
@@ -461,7 +597,6 @@
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
     const couleurs = ["#FF5252", "#FFD740", "#69F0AE", "#40C4FF", "#E040FB", "#FF6E40", "#FFFFFF"];
     const particules = [];
 
@@ -470,24 +605,13 @@
       for (let i = 0; i < nb; i++) {
         const angle = (Math.PI * 2 * i) / nb;
         const vitesse = 2 + Math.random() * 3.5;
-        particules.push({
-          x, y,
-          vx: Math.cos(angle) * vitesse,
-          vy: Math.sin(angle) * vitesse,
-          vie: 55 + Math.random() * 25,
-          vieDepart: 80,
-          couleur: couleurs[Math.floor(Math.random() * couleurs.length)]
-        });
+        particules.push({ x, y, vx: Math.cos(angle) * vitesse, vy: Math.sin(angle) * vitesse, vie: 55 + Math.random() * 25, vieDepart: 80, couleur: couleurs[Math.floor(Math.random() * couleurs.length)] });
       }
     }
-
     let nbExplosions = 0;
     const totalExplosions = 6;
     const intervalExplosions = setInterval(() => {
-      creerExplosion(
-        canvas.width * (0.2 + Math.random() * 0.6),
-        canvas.height * (0.15 + Math.random() * 0.35)
-      );
+      creerExplosion(canvas.width * (0.2 + Math.random() * 0.6), canvas.height * (0.15 + Math.random() * 0.35));
       nbExplosions++;
       if (nbExplosions >= totalExplosions) clearInterval(intervalExplosions);
     }, 350);
@@ -496,23 +620,15 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = particules.length - 1; i >= 0; i--) {
         const p = particules[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.05;
-        p.vie--;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.vie--;
         if (p.vie <= 0) { particules.splice(i, 1); continue; }
         ctx.globalAlpha = Math.max(p.vie / p.vieDepart, 0);
         ctx.fillStyle = p.couleur;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
-      if (particules.length > 0 || nbExplosions < totalExplosions) {
-        requestAnimationFrame(boucle);
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      if (particules.length > 0 || nbExplosions < totalExplosions) requestAnimationFrame(boucle);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     boucle();
   }
@@ -569,7 +685,6 @@
     if (noms.length >= 2 && !noms.includes(monPseudo)) { alert("Cette salle est deja complete !"); return; }
 
     await set(ref(db, "rooms/" + monCode + "/joueurs/" + monPseudo), { pret: true });
-
     afficherSalleAttente(monCode);
     ecouterSalle(monCode);
   });
@@ -578,12 +693,10 @@
     const h = document.getElementById("historique");
     h.style.display = (h.style.display === "none") ? "block" : "none";
   });
-
   document.getElementById("btn_themes_possibles").addEventListener("click", () => {
     const c = document.getElementById("liste_themes_possibles");
     c.style.display = (c.style.display === "none") ? "block" : "none";
   });
-
   document.getElementById("btn_info_theme").addEventListener("click", () => {
     const c = document.getElementById("info_theme");
     c.style.display = (c.style.display === "none") ? "block" : "none";
@@ -601,7 +714,144 @@
     await update(ref(db), updates);
   });
 
-  // --- Espace admin ---
+  // ============ PROPOSITION D'UN MOT PAR UN JOUEUR ============
+
+  document.getElementById("btn_proposer_mot").addEventListener("click", async () => {
+    document.getElementById("edit_pseudo_proposition").value = monPseudo || "";
+    document.getElementById("edit_nom_proposition").value = "";
+    document.getElementById("edit_info_proposition").value = "";
+    document.getElementById("apercu_photo_proposition").style.display = "none";
+    document.getElementById("edit_photo_proposition").value = "";
+    imageProposCompressee = "";
+    await remplirSelectSectionsProposition();
+    afficherEcran("ecran_proposition");
+  });
+
+  document.getElementById("btn_annuler_proposition").addEventListener("click", () => {
+    afficherEcran("ecran_fin");
+  });
+
+  async function remplirSelectSectionsProposition() {
+    const snap = await get(ref(db, "sections"));
+    const data = snap.val() || {};
+    const select = document.getElementById("select_section_proposition");
+    select.innerHTML = "";
+    Object.keys(data).forEach(cle => {
+      const opt = document.createElement("option");
+      opt.value = cle;
+      opt.innerText = data[cle].nom;
+      select.appendChild(opt);
+    });
+  }
+
+  document.getElementById("edit_photo_proposition").addEventListener("change", (e) => {
+    const fichier = e.target.files[0];
+    if (!fichier) return;
+    const lecteur = new FileReader();
+    lecteur.onload = (evt) => {
+      const img = new Image();
+      img.onload = () => {
+        const tailleMax = 300;
+        let largeur = img.width;
+        let hauteur = img.height;
+        if (largeur > hauteur && largeur > tailleMax) {
+          hauteur = Math.round(hauteur * (tailleMax / largeur));
+          largeur = tailleMax;
+        } else if (hauteur > tailleMax) {
+          largeur = Math.round(largeur * (tailleMax / hauteur));
+          hauteur = tailleMax;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = largeur;
+        canvas.height = hauteur;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, largeur, hauteur);
+        imageProposCompressee = canvas.toDataURL("image/jpeg", 0.7);
+        const apercu = document.getElementById("apercu_photo_proposition");
+        apercu.src = imageProposCompressee;
+        apercu.style.display = "block";
+      };
+      img.src = evt.target.result;
+    };
+    lecteur.readAsDataURL(fichier);
+  });
+
+  document.getElementById("btn_envoyer_proposition").addEventListener("click", async () => {
+    const pseudo = document.getElementById("edit_pseudo_proposition").value.trim();
+    const sectionChoisie = document.getElementById("select_section_proposition").value;
+    const nom = document.getElementById("edit_nom_proposition").value.trim();
+    const info = document.getElementById("edit_info_proposition").value.trim();
+
+    if (!pseudo) { alert("Entre ton pseudo !"); return; }
+    if (!nom) { alert("Entre un nom de mot !"); return; }
+    if (!sectionChoisie) { alert("Choisis une section !"); return; }
+
+    try {
+      const nouvelleRef = push(ref(db, "propositions"));
+      await set(nouvelleRef, {
+        texte: nom,
+        image: imageProposCompressee || "",
+        section: sectionChoisie,
+        info: info,
+        pseudo: pseudo,
+        dateEnvoi: Date.now()
+      });
+      alert("Proposition envoyee ! Elle sera examinee par l'administrateur.");
+      afficherEcran("ecran_menu_principal");
+    } catch (err) {
+      alert("Erreur lors de l'envoi de la proposition : " + err.message);
+    }
+  });
+
+  // ============================================================
+  // ============ ESPACE ADMIN — JEU 1 & 2 ============
+  // ============================================================
+
+  async function chargerPropositionsAdmin() {
+    const propSnap = await get(ref(db, "propositions"));
+    const sectionsSnap = await get(ref(db, "sections"));
+    const propositions = propSnap.val() || {};
+    const sectionsData = sectionsSnap.val() || {};
+    const conteneur = document.getElementById("liste_propositions_admin");
+    conteneur.innerHTML = "";
+
+    const cles = Object.keys(propositions);
+    if (cles.length === 0) { conteneur.innerHTML = "<p>Aucune proposition en attente.</p>"; return; }
+
+    cles.forEach(cle => {
+      const p = propositions[cle];
+      const nomSection = sectionsData[p.section] ? sectionsData[p.section].nom : "?";
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.style.flexWrap = "wrap";
+      div.innerHTML =
+        (p.image ? '<img src="' + p.image + '">' : '') +
+        '<span>' + p.texte + ' (' + nomSection + ') — propose par ' + p.pseudo + (p.info ? '<br><i>' + p.info + '</i>' : '') + '</span>' +
+        '<button class="btn-valider-prop">Valider</button>' +
+        '<button>Refuser</button>';
+      const boutons = div.querySelectorAll("button");
+      boutons[0].addEventListener("click", async () => {
+        try {
+          const nouvelleRef = push(ref(db, "themes"));
+          await set(nouvelleRef, { texte: p.texte, image: p.image || "", section: p.section, info: p.info || "" });
+          await set(ref(db, "propositions/" + cle), null);
+          await chargerPropositionsAdmin();
+          await chargerThemesAdmin();
+        } catch (err) {
+          alert("Erreur lors de la validation : " + err.message);
+        }
+      });
+      boutons[1].addEventListener("click", async () => {
+        try {
+          await set(ref(db, "propositions/" + cle), null);
+          await chargerPropositionsAdmin();
+        } catch (err) {
+          alert("Erreur lors du refus : " + err.message);
+        }
+      });
+      conteneur.appendChild(div);
+    });
+  }
 
   async function chargerSectionsAdmin() {
     const snap = await get(ref(db, "sections"));
@@ -609,11 +859,20 @@
     const conteneur = document.getElementById("liste_sections_admin");
     conteneur.innerHTML = "";
     const selectTheme = document.getElementById("select_section_theme");
+    const selectFiltre = document.getElementById("select_filtre_themes");
+    const selectProposition = document.getElementById("select_section_proposition");
+    const valeurFiltreActuelle = selectFiltre.value;
     selectTheme.innerHTML = "";
+    selectFiltre.innerHTML = "";
+
+    const optToutes = document.createElement("option");
+    optToutes.value = "";
+    optToutes.innerText = "Toutes les sections";
+    selectFiltre.appendChild(optToutes);
+
     const cles = Object.keys(data);
-    if (cles.length === 0) {
-      conteneur.innerHTML = "<p>Aucune section pour le moment.</p>";
-    }
+    if (cles.length === 0) conteneur.innerHTML = "<p>Aucune section pour le moment.</p>";
+
     cles.forEach(cle => {
       const div = document.createElement("div");
       div.className = "carte_theme";
@@ -622,6 +881,7 @@
         try {
           await set(ref(db, "sections/" + cle), null);
           await chargerSectionsAdmin();
+          await chargerThemesAdmin();
         } catch (err) {
           alert("Erreur lors de la suppression de la section : " + err.message);
         }
@@ -629,10 +889,17 @@
       conteneur.appendChild(div);
 
       const opt = document.createElement("option");
-      opt.value = cle;
-      opt.innerText = data[cle].nom;
+      opt.value = cle; opt.innerText = data[cle].nom;
       selectTheme.appendChild(opt);
+
+      const optFiltre = document.createElement("option");
+      optFiltre.value = cle; optFiltre.innerText = data[cle].nom;
+      selectFiltre.appendChild(optFiltre);
     });
+
+    if ([...selectFiltre.options].some(o => o.value === valeurFiltreActuelle)) {
+      selectFiltre.value = valeurFiltreActuelle;
+    }
   }
 
   async function chargerThemesAdmin() {
@@ -643,21 +910,43 @@
     const conteneur = document.getElementById("liste_themes_admin");
     conteneur.innerHTML = "";
 
-    const sectionFiltree = document.getElementById("select_section_theme").value;
-    const cles = Object.keys(themesData).filter(cle => themesData[cle].section === sectionFiltree);
+    const sectionFiltree = document.getElementById("select_filtre_themes").value;
+    const toutesLesCles = Object.keys(themesData);
+    if (toutesLesCles.length === 0) { conteneur.innerHTML = "<p>Aucun mot pour le moment.</p>"; return; }
 
-    const nomSectionFiltree = sectionsData[sectionFiltree] ? sectionsData[sectionFiltree].nom : "";
-    const titre = document.createElement("h4");
-    titre.innerText = nomSectionFiltree ? "Themes de : " + nomSectionFiltree : "Themes";
-    titre.style.margin = "8px 0 4px";
-    conteneur.appendChild(titre);
-
-    if (cles.length === 0) {
-      conteneur.innerHTML += "<p>Aucun theme dans cette section.</p>";
-      return;
+    if (sectionFiltree) {
+      const cles = toutesLesCles.filter(cle => themesData[cle].section === sectionFiltree);
+      const nomSection = sectionsData[sectionFiltree] ? sectionsData[sectionFiltree].nom : "";
+      const titre = document.createElement("h4");
+      titre.innerText = nomSection;
+      titre.style.margin = "8px 0 4px";
+      conteneur.appendChild(titre);
+      if (cles.length === 0) { conteneur.innerHTML += "<p>Aucun mot dans cette section.</p>"; return; }
+      cles.forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
+    } else {
+      const groupes = {};
+      toutesLesCles.forEach(cle => {
+        const sectionCle = themesData[cle].section || "_sans_section";
+        if (!groupes[sectionCle]) groupes[sectionCle] = [];
+        groupes[sectionCle].push(cle);
+      });
+      Object.keys(sectionsData).forEach(sectionCle => {
+        if (!groupes[sectionCle]) return;
+        const titre = document.createElement("h4");
+        titre.innerText = sectionsData[sectionCle].nom;
+        titre.style.margin = "16px 0 4px";
+        conteneur.appendChild(titre);
+        groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
+        delete groupes[sectionCle];
+      });
+      Object.keys(groupes).forEach(sectionCle => {
+        const titre = document.createElement("h4");
+        titre.innerText = "Section inconnue";
+        titre.style.margin = "16px 0 4px";
+        conteneur.appendChild(titre);
+        groupes[sectionCle].forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
+      });
     }
-
-    cles.forEach(cle => creerCarteThemeAdmin(conteneur, cle, themesData[cle]));
   }
 
   function creerCarteThemeAdmin(conteneur, cle, theme) {
@@ -689,13 +978,6 @@
     conteneur.appendChild(div);
   }
 
-  document.getElementById("btn_admin").addEventListener("click", () => {
-    afficherEcran("ecran_admin");
-    document.getElementById("admin_connexion").style.display = "block";
-    document.getElementById("admin_panneau").style.display = "none";
-    document.getElementById("edit_mdp_admin").value = "";
-  });
-
   document.getElementById("btn_valider_mdp").addEventListener("click", async () => {
     const mdp = document.getElementById("edit_mdp_admin").value;
     if (mdp !== MDP_ADMIN) { alert("Mot de passe incorrect !"); return; }
@@ -703,29 +985,21 @@
     document.getElementById("admin_panneau").style.display = "block";
     await chargerSectionsAdmin();
     await chargerThemesAdmin();
+    await chargerPropositionsAdmin();
+    await chargerRegionsAdmin();
+    await chargerCriteresAdmin();
   });
 
-  document.getElementById("select_section_theme").addEventListener("change", () => {
+  document.getElementById("select_filtre_themes").addEventListener("change", () => {
     chargerThemesAdmin();
-  });
-
-  document.getElementById("btn_retour_admin").addEventListener("click", () => {
-    afficherEcran("ecran_accueil");
-  });
-
-  document.getElementById("btn_retour_admin2").addEventListener("click", () => {
-    annulerEditionTheme();
-    afficherEcran("ecran_accueil");
   });
 
   document.getElementById("btn_ajouter_section").addEventListener("click", async () => {
     const nom = document.getElementById("edit_nouvelle_section").value.trim();
     if (!nom) { alert("Entre un nom de section !"); return; }
-
     try {
       const nouvelleRef = push(ref(db, "sections"));
       await set(nouvelleRef, { nom: nom });
-
       document.getElementById("edit_nouvelle_section").value = "";
       await chargerSectionsAdmin();
     } catch (err) {
@@ -738,7 +1012,7 @@
     const image = document.getElementById("edit_nouvelle_image").value.trim();
     const info = document.getElementById("edit_nouvelle_info").value.trim();
     const sectionChoisie = document.getElementById("select_section_theme").value;
-    if (!nom) { alert("Entre un nom de theme !"); return; }
+    if (!nom) { alert("Entre un nom de mot !"); return; }
     if (!sectionChoisie) { alert("Cree d'abord une section !"); return; }
 
     try {
@@ -749,13 +1023,12 @@
         const nouvelleRef = push(ref(db, "themes"));
         await set(nouvelleRef, { texte: nom, image: image, section: sectionChoisie, info: info });
       }
-
       document.getElementById("edit_nouveau_nom").value = "";
       document.getElementById("edit_nouvelle_image").value = "";
       document.getElementById("edit_nouvelle_info").value = "";
       await chargerThemesAdmin();
     } catch (err) {
-      alert("Erreur lors de la sauvegarde du theme : " + err.message);
+      alert("Erreur lors de la sauvegarde du mot : " + err.message);
     }
   });
 
@@ -767,10 +1040,442 @@
     document.getElementById("edit_nouvelle_image").value = "";
     document.getElementById("edit_nouvelle_info").value = "";
   }
-
   document.getElementById("btn_annuler_edition").addEventListener("click", annulerEditionTheme);
 
+  // ============================================================
+  // ============ ESPACE ADMIN — JEU 3 (Regions) ============
+  // ============================================================
+
+  async function chargerRegionsAdmin() {
+    const snap = await get(ref(db, "regions"));
+    const data = snap.val() || {};
+    const conteneur = document.getElementById("liste_regions_admin");
+    conteneur.innerHTML = "";
+    const cles = Object.keys(data);
+    if (cles.length === 0) conteneur.innerHTML = "<p>Aucune region pour le moment.</p>";
+
+    cles.forEach(cle => {
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.innerHTML =
+        '<span>' + data[cle].nom + '</span>' +
+        '<button class="btn-modifier" data-cle="' + cle + '">Modifier</button>' +
+        '<button data-cle="' + cle + '">Supprimer</button>';
+      div.querySelector(".btn-modifier").addEventListener("click", () => {
+        cleRegionEnEdition = cle;
+        document.getElementById("edit_nouvelle_region").value = data[cle].nom;
+        document.getElementById("btn_ajouter_region").innerText = "Enregistrer les modifications";
+        document.getElementById("btn_annuler_edition_region").style.display = "block";
+        document.getElementById("edit_nouvelle_region").scrollIntoView({ behavior: "smooth" });
+      });
+      div.querySelectorAll("button")[1].addEventListener("click", async () => {
+        try {
+          await set(ref(db, "regions/" + cle), null);
+          await chargerRegionsAdmin();
+          await chargerCasesRegionsCritere();
+          await chargerCriteresAdmin();
+        } catch (err) {
+          alert("Erreur lors de la suppression : " + err.message);
+        }
+      });
+      conteneur.appendChild(div);
+    });
+
+    await chargerCasesRegionsCritere();
+  }
+
+  document.getElementById("btn_ajouter_region").addEventListener("click", async () => {
+    const nom = document.getElementById("edit_nouvelle_region").value.trim();
+    if (!nom) { alert("Entre un nom de region !"); return; }
+    try {
+      if (cleRegionEnEdition) {
+        await set(ref(db, "regions/" + cleRegionEnEdition), { nom: nom });
+        annulerEditionRegion();
+      } else {
+        const nouvelleRef = push(ref(db, "regions"));
+        await set(nouvelleRef, { nom: nom });
+        document.getElementById("edit_nouvelle_region").value = "";
+      }
+      await chargerRegionsAdmin();
+    } catch (err) {
+      alert("Erreur lors de la sauvegarde de la region : " + err.message);
+    }
+  });
+
+  function annulerEditionRegion() {
+    cleRegionEnEdition = null;
+    document.getElementById("btn_ajouter_region").innerText = "Ajouter la region";
+    document.getElementById("btn_annuler_edition_region").style.display = "none";
+    document.getElementById("edit_nouvelle_region").value = "";
+  }
+  document.getElementById("btn_annuler_edition_region").addEventListener("click", annulerEditionRegion);
+
+  async function chargerCasesRegionsCritere() {
+    const snap = await get(ref(db, "regions"));
+    const data = snap.val() || {};
+    const conteneur = document.getElementById("cases_regions_critere");
+    conteneur.innerHTML = "";
+    Object.keys(data).forEach(cle => {
+      const div = document.createElement("div");
+      div.className = "case_region";
+      div.innerHTML =
+        '<input type="checkbox" data-cle="' + cle + '">' +
+        '<label>' + data[cle].nom + '</label>';
+      conteneur.appendChild(div);
+    });
+  }
+
+  async function chargerCriteresAdmin() {
+    const criteresSnap = await get(ref(db, "criteres"));
+    const regionsSnap = await get(ref(db, "regions"));
+    const criteresData = criteresSnap.val() || {};
+    const regionsData = regionsSnap.val() || {};
+    const conteneur = document.getElementById("liste_criteres_admin");
+    conteneur.innerHTML = "";
+    const cles = Object.keys(criteresData);
+    if (cles.length === 0) { conteneur.innerHTML = "<p>Aucun critere pour le moment.</p>"; return; }
+
+    cles.forEach(cle => {
+      const critere = criteresData[cle];
+      const regionsCorrectes = critere.regionsCorrectes || {};
+      const nomsRegionsCorrectes = Object.keys(regionsCorrectes)
+        .filter(rc => regionsCorrectes[rc] && regionsData[rc])
+        .map(rc => regionsData[rc].nom)
+        .join(", ");
+
+      const div = document.createElement("div");
+      div.className = "carte_theme";
+      div.style.flexWrap = "wrap";
+      div.innerHTML =
+        (critere.image ? '<img src="' + critere.image + '">' : '') +
+        '<span>' + critere.texte + '<br><i style="font-size:12px;">Regions : ' + (nomsRegionsCorrectes || "aucune") + '</i></span>' +
+        '<button class="btn-modifier">Modifier</button>' +
+        '<button>Supprimer</button>';
+
+      div.querySelector(".btn-modifier").addEventListener("click", async () => {
+        cleCritereEnEdition = cle;
+        document.getElementById("edit_nouveau_critere").value = critere.texte;
+        document.getElementById("edit_image_critere").value = critere.image || "";
+        await chargerCasesRegionsCritere();
+        document.querySelectorAll("#cases_regions_critere input[type=checkbox]").forEach(cb => {
+          cb.checked = !!regionsCorrectes[cb.dataset.cle];
+        });
+        document.getElementById("btn_ajouter_critere").innerText = "Enregistrer les modifications";
+        document.getElementById("btn_annuler_edition_critere").style.display = "block";
+        document.getElementById("edit_nouveau_critere").scrollIntoView({ behavior: "smooth" });
+      });
+
+      div.querySelectorAll("button")[1].addEventListener("click", async () => {
+        try {
+          await set(ref(db, "criteres/" + cle), null);
+          await chargerCriteresAdmin();
+        } catch (err) {
+          alert("Erreur lors de la suppression : " + err.message);
+        }
+      });
+
+      conteneur.appendChild(div);
+    });
+  }
+
+  document.getElementById("btn_ajouter_critere").addEventListener("click", async () => {
+    const texte = document.getElementById("edit_nouveau_critere").value.trim();
+    const image = document.getElementById("edit_image_critere").value.trim();
+    if (!texte) { alert("Entre le texte du critere !"); return; }
+
+    const regionsCorrectes = {};
+    document.querySelectorAll("#cases_regions_critere input[type=checkbox]").forEach(cb => {
+      if (cb.checked) regionsCorrectes[cb.dataset.cle] = true;
+    });
+
+    try {
+      if (cleCritereEnEdition) {
+        await set(ref(db, "criteres/" + cleCritereEnEdition), { texte: texte, image: image, regionsCorrectes: regionsCorrectes });
+        annulerEditionCritere();
+      } else {
+        const nouvelleRef = push(ref(db, "criteres"));
+        await set(nouvelleRef, { texte: texte, image: image, regionsCorrectes: regionsCorrectes });
+        document.getElementById("edit_nouveau_critere").value = "";
+        document.getElementById("edit_image_critere").value = "";
+        await chargerCasesRegionsCritere();
+      }
+      await chargerCriteresAdmin();
+    } catch (err) {
+      alert("Erreur lors de la sauvegarde du critere : " + err.message);
+    }
+  });
+
+  function annulerEditionCritere() {
+    cleCritereEnEdition = null;
+    document.getElementById("btn_ajouter_critere").innerText = "Ajouter le critere";
+    document.getElementById("btn_annuler_edition_critere").style.display = "none";
+    document.getElementById("edit_nouveau_critere").value = "";
+    document.getElementById("edit_image_critere").value = "";
+    chargerCasesRegionsCritere();
+  }
+  document.getElementById("btn_annuler_edition_critere").addEventListener("click", annulerEditionCritere);
+
+  // ============================================================
+  // ============ JEU 2 : QUIZ (solo) ============
+  // ============================================================
+
+  let themesSectionQuiz = [];
+  let themesRestantsQuiz = [];
+  let themeCourantQuiz = null;
+  let scoreQuiz = 0;
+  let totalQuestionsQuiz = 0;
+
+  function majEtatConnexionQuiz() {
+    const p = document.getElementById("etat_connexion_quiz");
+    if (navigator.onLine) { p.innerText = "En ligne"; p.className = "connexion-ok"; }
+    else { p.innerText = "Hors ligne (donnees en cache utilisees)"; p.className = "connexion-off"; }
+  }
+  window.addEventListener("online", () => { majEtatConnexionQuiz(); majEtatConnexionRegions(); });
+  window.addEventListener("offline", () => { majEtatConnexionQuiz(); majEtatConnexionRegions(); });
+
+  async function chargerSectionsQuiz() {
+    let sectionsData = null;
+    if (navigator.onLine) {
+      try {
+        const snap = await get(ref(db, "sections"));
+        sectionsData = snap.val() || {};
+        localStorage.setItem("quiz_sections", JSON.stringify({ data: sectionsData, maj: Date.now() }));
+      } catch (err) { sectionsData = null; }
+    }
+    if (!sectionsData) {
+      const cache = localStorage.getItem("quiz_sections");
+      if (cache) sectionsData = JSON.parse(cache).data;
+    }
+    return sectionsData || {};
+  }
+
+  async function chargerThemesSectionQuiz(sectionCle) {
+    let themesArray = null;
+    if (navigator.onLine) {
+      try {
+        const snap = await get(ref(db, "themes"));
+        const themesData = snap.val() || {};
+        themesArray = Object.values(themesData).filter(t => t.section === sectionCle);
+        localStorage.setItem("quiz_themes_" + sectionCle, JSON.stringify({ data: themesArray, maj: Date.now() }));
+      } catch (err) { themesArray = null; }
+    }
+    if (!themesArray) {
+      const cache = localStorage.getItem("quiz_themes_" + sectionCle);
+      if (cache) themesArray = JSON.parse(cache).data;
+    }
+    return themesArray || [];
+  }
+
+  async function remplirSelectSectionsQuiz() {
+    const sectionsData = await chargerSectionsQuiz();
+    const select = document.getElementById("select_section_quiz");
+    select.innerHTML = "";
+    Object.keys(sectionsData).forEach(cle => {
+      const opt = document.createElement("option");
+      opt.value = cle; opt.innerText = sectionsData[cle].nom;
+      select.appendChild(opt);
+    });
+    if (Object.keys(sectionsData).length === 0) select.innerHTML = "<option value=''>Aucune section disponible</option>";
+  }
+
+  function demarrerQuiz(themes) {
+    themesSectionQuiz = themes;
+    themesRestantsQuiz = [];
+    scoreQuiz = 0;
+    totalQuestionsQuiz = 0;
+    afficherEcran("ecran_quiz");
+    questionSuivanteQuiz();
+  }
+
+  function questionSuivanteQuiz() {
+    if (themesRestantsQuiz.length === 0) themesRestantsQuiz = [...themesSectionQuiz];
+    const indexChoisi = Math.floor(Math.random() * themesRestantsQuiz.length);
+    themeCourantQuiz = themesRestantsQuiz[indexChoisi];
+    themesRestantsQuiz.splice(indexChoisi, 1);
+
+    const autresThemes = themesSectionQuiz.filter(t => t.texte !== themeCourantQuiz.texte);
+    const nbMauvaises = Math.min(5, autresThemes.length);
+    const melangeAutres = [...autresThemes].sort(() => Math.random() - 0.5).slice(0, nbMauvaises);
+    const options = [...melangeAutres, themeCourantQuiz].sort(() => Math.random() - 0.5);
+
+    const image = document.getElementById("image_quiz");
+    if (themeCourantQuiz.image) { image.src = themeCourantQuiz.image; image.style.display = "block"; }
+    else image.style.display = "none";
+
+    const conteneur = document.getElementById("options_quiz");
+    conteneur.innerHTML = "";
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.innerText = opt.texte;
+      btn.addEventListener("click", () => validerReponseQuiz(opt, btn));
+      conteneur.appendChild(btn);
+    });
+
+    document.getElementById("feedback_quiz").innerHTML = "";
+    document.getElementById("btn_suivant_quiz").style.display = "none";
+  }
+
+  function validerReponseQuiz(opt, btnClique) {
+    const boutons = document.querySelectorAll("#options_quiz button");
+    boutons.forEach(b => { b.disabled = true; });
+    totalQuestionsQuiz++;
+    const estCorrect = opt.texte === themeCourantQuiz.texte;
+
+    if (estCorrect) {
+      scoreQuiz++;
+      btnClique.style.background = "#4CAF50";
+      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#4CAF50; font-weight:bold;'>Bonne reponse !</p>";
+    } else {
+      btnClique.style.background = "#F44336";
+      boutons.forEach(b => { if (b.innerText === themeCourantQuiz.texte) b.style.background = "#4CAF50"; });
+      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#F44336; font-weight:bold;'>Rate ! C'etait : " + themeCourantQuiz.texte + "</p>";
+    }
+    document.getElementById("score_quiz").innerText = "Score : " + scoreQuiz + " / " + totalQuestionsQuiz;
+    document.getElementById("btn_suivant_quiz").style.display = "block";
+  }
+
+  document.getElementById("btn_jouer_quiz").addEventListener("click", async () => {
+    const sectionCle = document.getElementById("select_section_quiz").value;
+    if (!sectionCle) { alert("Aucune section disponible !"); return; }
+    const themes = await chargerThemesSectionQuiz(sectionCle);
+    if (themes.length < 2) { alert("Il faut au moins 2 mots dans cette section pour jouer."); return; }
+    demarrerQuiz(themes);
+  });
+  document.getElementById("btn_suivant_quiz").addEventListener("click", () => questionSuivanteQuiz());
+  document.getElementById("btn_quitter_quiz").addEventListener("click", () => afficherEcran("ecran_menu_principal"));
+
+  document.getElementById("btn_maj_donnees_quiz").addEventListener("click", async () => {
+    if (!navigator.onLine) { alert("Tu dois etre connecte a internet pour mettre a jour les donnees."); return; }
+    await remplirSelectSectionsQuiz();
+    const sectionCle = document.getElementById("select_section_quiz").value;
+    if (sectionCle) await chargerThemesSectionQuiz(sectionCle);
+    alert("Donnees mises a jour !");
+  });
+
+  // ============================================================
+  // ============ JEU 3 : REGIONS DE MADAGASCAR (solo) ============
+  // ============================================================
+
+  let regionsToutesGame = [];
+  let criteresTousGame = [];
+  let critereCourantGame = null;
+  let regionsProposeesGame = [];
+  let scoreRegions = 0;
+  let totalPossiblesRegions = 0;
+
+  function majEtatConnexionRegions() {
+    const p = document.getElementById("etat_connexion_regions");
+    if (navigator.onLine) { p.innerText = "En ligne"; p.className = "connexion-ok"; }
+    else { p.innerText = "Hors ligne (donnees en cache utilisees)"; p.className = "connexion-off"; }
+  }
+
+  async function chargerDonneesRegionsJeu() {
+    let regionsData = null;
+    let criteresData = null;
+    if (navigator.onLine) {
+      try {
+        const regSnap = await get(ref(db, "regions"));
+        const critSnap = await get(ref(db, "criteres"));
+        regionsData = regSnap.val() || {};
+        criteresData = critSnap.val() || {};
+        localStorage.setItem("regions_cache", JSON.stringify({ regions: regionsData, criteres: criteresData, maj: Date.now() }));
+      } catch (err) { regionsData = null; criteresData = null; }
+    }
+    if (!regionsData) {
+      const cache = localStorage.getItem("regions_cache");
+      if (cache) {
+        const parsed = JSON.parse(cache);
+        regionsData = parsed.regions;
+        criteresData = parsed.criteres;
+      }
+    }
+    return { regions: regionsData || {}, criteres: criteresData || {} };
+  }
+
+  function demarrerJeuRegions(regionsData, criteresData) {
+    regionsToutesGame = Object.keys(regionsData).map(cle => ({ cle: cle, nom: regionsData[cle].nom }));
+    criteresTousGame = Object.keys(criteresData).map(cle => ({ cle: cle, texte: criteresData[cle].texte, image: criteresData[cle].image, regionsCorrectes: criteresData[cle].regionsCorrectes || {} }));
+    scoreRegions = 0;
+    totalPossiblesRegions = 0;
+    afficherEcran("ecran_jeu_regions");
+    questionSuivanteRegions();
+  }
+
+  function questionSuivanteRegions() {
+    critereCourantGame = criteresTousGame[Math.floor(Math.random() * criteresTousGame.length)];
+
+    const nbOptions = Math.min(4 + Math.floor(Math.random() * 3), regionsToutesGame.length);
+    regionsProposeesGame = [...regionsToutesGame].sort(() => Math.random() - 0.5).slice(0, nbOptions);
+
+    document.getElementById("texte_critere_jeu").innerText = critereCourantGame.texte;
+    const image = document.getElementById("image_critere_jeu");
+    if (critereCourantGame.image) { image.src = critereCourantGame.image; image.style.display = "block"; }
+    else image.style.display = "none";
+
+    const conteneur = document.getElementById("cases_regions_jeu");
+    conteneur.innerHTML = "";
+    regionsProposeesGame.forEach(r => {
+      const div = document.createElement("div");
+      div.className = "case_region";
+      div.innerHTML = '<input type="checkbox" data-cle="' + r.cle + '"><label>' + r.nom + '</label>';
+      conteneur.appendChild(div);
+    });
+
+    document.getElementById("feedback_regions").innerHTML = "";
+    document.getElementById("btn_valider_regions").style.display = "block";
+    document.getElementById("btn_suivant_regions").style.display = "none";
+  }
+
+  document.getElementById("btn_valider_regions").addEventListener("click", () => {
+    const regionsCorrectes = critereCourantGame.regionsCorrectes || {};
+    let bonnesReponses = 0;
+
+    document.querySelectorAll("#cases_regions_jeu .case_region").forEach(div => {
+      const checkbox = div.querySelector("input");
+      checkbox.disabled = true;
+      const cle = checkbox.dataset.cle;
+      const estCorrecteEnVrai = !!regionsCorrectes[cle];
+      const joueurACoche = checkbox.checked;
+      if (estCorrecteEnVrai === joueurACoche) {
+        bonnesReponses++;
+        div.classList.add("correct");
+      } else {
+        div.classList.add("incorrect");
+      }
+    });
+
+    scoreRegions += bonnesReponses;
+    totalPossiblesRegions += regionsProposeesGame.length;
+    document.getElementById("score_regions").innerText = "Score : " + scoreRegions + " / " + totalPossiblesRegions;
+    document.getElementById("feedback_regions").innerHTML =
+      "<p style='font-weight:bold;'>" + bonnesReponses + " / " + regionsProposeesGame.length + " bonnes reponses sur cette question</p>";
+
+    document.getElementById("btn_valider_regions").style.display = "none";
+    document.getElementById("btn_suivant_regions").style.display = "block";
+  });
+
+  document.getElementById("btn_suivant_regions").addEventListener("click", () => questionSuivanteRegions());
+  document.getElementById("btn_quitter_regions").addEventListener("click", () => afficherEcran("ecran_menu_principal"));
+
+  document.getElementById("btn_jouer_regions").addEventListener("click", async () => {
+    const { regions, criteres } = await chargerDonneesRegionsJeu();
+    if (Object.keys(regions).length < 2) { alert("Il faut au moins 2 regions enregistrees dans l'admin pour jouer."); return; }
+    if (Object.keys(criteres).length === 0) { alert("Aucun critere n'a encore ete ajoute dans l'admin."); return; }
+    demarrerJeuRegions(regions, criteres);
+  });
+
+  document.getElementById("btn_maj_donnees_regions").addEventListener("click", async () => {
+    if (!navigator.onLine) { alert("Tu dois etre connecte a internet pour mettre a jour les donnees."); return; }
+    await chargerDonneesRegionsJeu();
+    alert("Donnees mises a jour !");
+  });
+
+  // ============ INITIALISATION ============
+
   chargerSectionsAccueil();
+  remplirSelectSectionsQuiz();
+  majEtatConnexionQuiz();
+  majEtatConnexionRegions();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
