@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeux de Themes</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2196F3">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  input, button, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; font-family: inherit; }
+  button { background: #2196F3; color: white; border: none; border-radius: 8px; }
+  .btn-oui { background: #4CAF50; }
+  .btn-non { background: #F44336; }
+  .btn-petit { width: auto; display: inline-block; padding: 6px 14px; font-size: 14px; background: #757575; }
+  #ecran_accueil, #ecran_attente, #ecran_jeu, #ecran_fin, #ecran_admin, #ecran_proposition,
+  #ecran_accueil_quiz, #ecran_quiz, #ecran_accueil_regions, #ecran_jeu_regions { display: none; text-align: center; }
+  #code_affiche { font-size: 2em; font-weight: bold; margin: 20px 0; }
+  #liste_joueurs, #historique { list-style: none; padding: 0; text-align: left; }
+  #liste_joueurs li, #historique li { padding: 8px; background: #eee; margin: 4px 0; border-radius: 6px; }
+  .badge-oui { color: #4CAF50; font-weight: bold; }
+  .badge-non { color: #F44336; font-weight: bold; }
+  #mon_theme { font-size: 1.3em; font-weight: bold; background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
+  #choix_action { display: flex; gap: 8px; }
+  #choix_action button { flex: 1; }
+  .carte_theme { display: flex; align-items: center; gap: 10px; background: #eee; padding: 8px; border-radius: 6px; margin: 6px 0; text-align: left; }
+  .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
+  .carte_theme span { flex: 1; }
+  .carte_theme button { width: auto; padding: 6px 10px; margin: 0; background: #F44336; font-size: 13px; }
+  .carte_theme .btn-modifier { background: #FF9800; margin-right: 6px; }
+  .carte_theme .btn-valider-prop { background: #4CAF50; margin-right: 6px; }
+  .carte_theme.elimine { opacity: 0.4; }
+  .carte_theme.elimine span { text-decoration: line-through; }
+  #liste_themes_possibles .carte_theme { cursor: pointer; }
+  #liste_themes_possibles, #historique { display: none; text-align: left; }
+  .boutons_secondaires { display: flex; gap: 6px; }
+  .boutons_secondaires button { flex: 1; }
+  #btn_admin_menu { width: auto; display: block; margin: 30px auto 0; padding: 4px 10px; font-size: 12px; background: transparent; color: #bbb; border: none; }
+  .btn-menu-jeu { padding: 20px; font-size: 18px; margin: 10px 0; }
+  .bloc_admin_jeu { border: 2px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 18px 0; }
+  .titre_bloc_jeu { background: #2196F3; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
+  .titre_bloc_jeu2 { background: #009688; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
+  .case_region { display: flex; align-items: center; gap: 8px; padding: 6px; background: #eee; margin: 3px 0; border-radius: 6px; text-align: left; }
+  .case_region input { width: auto; margin: 0; }
+  .case_region label { flex: 1; }
+  #cases_regions_jeu { text-align: left; }
+  #cases_regions_jeu .case_region.correct { background: #c8e6c9; }
+  #cases_regions_jeu .case_region.incorrect { background: #ffcdd2; }
+  #apercu_photo_proposition { max-width: 180px; max-height: 180px; border-radius: 8px; display: none; margin: 8px auto; }
+  #image_critere_jeu { max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin: 0 auto 10px; }
+  #image_quiz { max-width: 220px; max-height: 220px; border-radius: 8px; display: block; margin: 0 auto 14px; }
+  #etat_connexion_quiz { font-size: 13px; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 4px; }
+  .connexion-ok { background: #e8f5e9; color: #2e7d32; }
+  .connexion-off { background: #fff3e0; color: #e65100; }
+  #btn_suivant_quiz { background: #4CAF50; display: none; }
+  #btn_suivant_regions { background: #4CAF50; display: none; }
+  #score_quiz, #score_regions { font-size: 1.2em; font-weight: bold; }
+</style>
+</head>
+<body>
+
+  <!-- ============ MENU PRINCIPAL ============ -->
+  <div id="ecran_menu_principal">
+    <h2 style="text-align:center;">Choisis un jeu</h2>
+    <button class="btn-menu-jeu" id="btn_menu_devine">Devine le mot</button>
+    <button class="btn-menu-jeu" id="btn_menu_quiz" style="background:#009688;">Quiz</button>
+    <button class="btn-menu-jeu" id="btn_menu_regions" style="background:#FF9800;">Regions de Madagascar</button>
+    <button id="btn_admin_menu">Admin</button>
+  </div>
+
+  <!-- ============ JEU 1 : DEVINE LE MOT ============ -->
+  <div id="ecran_accueil">
+    <input type="text" id="edit_pseudo" placeholder="Entre ton pseudo">
+    <p style="text-align:left; margin-bottom:0;">Section (pour creer une salle) :</p>
+    <select id="select_section"></select>
+    <button id="btn_creer">Creer une salle</button>
+    <input type="text" id="edit_code" placeholder="Code de la salle">
+    <button id="btn_rejoindre">Rejoindre</button>
+    <button class="btn-petit" id="btn_retour_menu1">Retour au menu</button>
+  </div>
+
+  <div id="ecran_attente">
+    <p>Code de la salle :</p>
+    <div id="code_affiche"></div>
+    <p id="statut_attente">En attente de l'autre joueur...</p>
+    <ul id="liste_joueurs"></ul>
+  </div>
+
+  <div id="ecran_jeu">
+    <p>Ton mot secret :</p>
+    <button class="btn-petit" id="btn_info_theme" style="background:#FF9800;">Informations</button>
+    <div id="info_theme" style="display:none; text-align:left; background:#fff3e0; padding:10px; border-radius:8px; margin:8px 0;"></div>
+    <div id="mon_theme"></div>
+    <div class="boutons_secondaires">
+      <button class="btn-petit" id="btn_historique">Historique</button>
+      <button class="btn-petit" id="btn_themes_possibles">Mots possibles</button>
+    </div>
+    <div id="zone_action"></div>
+    <ul id="historique"></ul>
+    <div id="liste_themes_possibles"></div>
+  </div>
+
+  <div id="ecran_fin">
+    <h2 id="message_fin"></h2>
+    <p id="themes_reveles"></p>
+    <button id="btn_rejouer">Rejouer</button>
+    <button id="btn_proposer_mot" style="background:#FF9800;">Proposer un mot</button>
+    <button class="btn-petit" id="btn_retour_menu_fin">Retour au menu</button>
+  </div>
+
+  <!-- ============ PROPOSITION D'UN MOT PAR UN JOUEUR ============ -->
+  <div id="ecran_proposition">
+    <h2>Proposer un mot</h2>
+    <input type="text" id="edit_pseudo_proposition" placeholder="Ton pseudo">
+    <select id="select_section_proposition"></select>
+    <input type="text" id="edit_nom_proposition" placeholder="Nom du mot">
+    <p style="text-align:left; margin-bottom:0;">Photo :</p>
+    <input type="file" id="edit_photo_proposition" accept="image/*">
+    <img id="apercu_photo_proposition">
+    <textarea id="edit_info_proposition" placeholder="Information (optionnel)" rows="3"></textarea>
+    <button id="btn_envoyer_proposition">Envoyer la proposition</button>
+    <button class="btn-petit" id="btn_annuler_proposition">Annuler</button>
+  </div>
+
+  <!-- ============ ESPACE ADMIN ============ -->
+  <div id="ecran_admin">
+    <h2>Espace administrateur</h2>
+    <div id="admin_connexion">
+      <input type="password" id="edit_mdp_admin" placeholder="Mot de passe">
+      <button id="btn_valider_mdp">Valider</button>
+      <button class="btn-petit" id="btn_retour_admin">Retour</button>
+    </div>
+    <div id="admin_panneau" style="display:none;">
+
+      <div class="bloc_admin_jeu">
+        <h3 class="titre_bloc_jeu">Jeu 1 &amp; 2 : Devine le mot / Quiz</h3>
+
+        <h4>Propositions en attente</h4>
+        <div id="liste_propositions_admin"></div>
+
+        <h4>Ajouter une section</h4>
+        <input type="text" id="edit_nouvelle_section" placeholder="Nom de la section (ex: Fruits)">
+        <button id="btn_ajouter_section">Ajouter la section</button>
+        <h4>Sections actuelles</h4>
+        <div id="liste_sections_admin"></div>
+
+        <h4>Ajouter un mot</h4>
+        <select id="select_section_theme"></select>
+        <input type="text" id="edit_nouveau_nom" placeholder="Nom du mot">
+        <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
+        <textarea id="edit_nouvelle_info" placeholder="Information sur le mot (optionnel)" rows="3"></textarea>
+        <button id="btn_ajouter_theme">Ajouter</button>
+        <button class="btn-petit" id="btn_annuler_edition">Annuler la modification</button>
+        <h4>Mots actuels</h4>
+        <p style="margin:4px 0; font-size:13px; color:#666;">Filtrer par section :</p>
+        <select id="select_filtre_themes"></select>
+        <div id="liste_themes_admin"></div>
+      </div>
+
+      <div class="bloc_admin_jeu">
+        <h3 class="titre_bloc_jeu2">Jeu 3 : Regions de Madagascar</h3>
+
+        <h4>Ajouter une region</h4>
+        <input type="text" id="edit_nouvelle_region" placeholder="Nom de la region">
+        <button id="btn_ajouter_region" style="background:#FF9800;">Ajouter la region</button>
+        <button class="btn-petit" id="btn_annuler_edition_region">Annuler la modification</button>
+        <h4>Regions actuelles</h4>
+        <div id="liste_regions_admin"></div>
+
+        <h4>Ajouter un critere</h4>
+        <input type="text" id="edit_nouveau_critere" placeholder="Texte du critere (ex: Regions cotieres)">
+        <input type="text" id="edit_image_critere" placeholder="Lien de l'image (optionnel)">
+        <p style="text-align:left; margin-bottom:0;">Coche les regions concernees :</p>
+        <div id="cases_regions_critere"></div>
+        <button id="btn_ajouter_critere" style="background:#FF9800;">Ajouter le critere</button>
+        <button class="btn-petit" id="btn_annuler_edition_critere">Annuler la modification</button>
+        <h4>Criteres actuels</h4>
+        <div id="liste_criteres_admin"></div>
+      </div>
+
+      <button class="btn-petit" id="btn_retour_admin2">Retour</button>
+    </div>
+  </div>
+
+  <!-- ============ JEU 2 : QUIZ ============ -->
+  <div id="ecran_accueil_quiz">
+    <h2 style="text-align:center;">Quiz : devine le mot</h2>
+    <p id="etat_connexion_quiz"></p>
+    <p style="text-align:left; margin-bottom:0;">Choisis une section :</p>
+    <select id="select_section_quiz"></select>
+    <button id="btn_jouer_quiz" style="background:#009688;">Jouer</button>
+    <button id="btn_maj_donnees_quiz" class="btn-petit">Mettre a jour les donnees</button>
+    <button class="btn-petit" id="btn_retour_menu_quiz">Retour au menu</button>
+  </div>
+
+  <div id="ecran_quiz">
+    <p id="score_quiz">Score : 0 / 0</p>
+    <img id="image_quiz">
+    <div id="options_quiz"></div>
+    <div id="feedback_quiz"></div>
+    <button id="btn_suivant_quiz">Question suivante</button>
+    <button class="btn-petit" id="btn_quitter_quiz">Quitter</button>
+  </div>
+
+  <!-- ============ JEU 3 : REGIONS DE MADAGASCAR ============ -->
+  <div id="ecran_accueil_regions">
+    <h2 style="text-align:center;">Regions de Madagascar</h2>
+    <p id="etat_connexion_regions"></p>
+    <button id="btn_jouer_regions" style="background:#FF9800;">Jouer</button>
+    <button id="btn_maj_donnees_regions" class="btn-petit">Mettre a jour les donnees</button>
+    <button class="btn-petit" id="btn_retour_menu_regions">Retour au menu</button>
+  </div>
+
+  <div id="ecran_jeu_regions">
+    <p id="score_regions">Score : 0 / 0</p>
+    <h3 id="texte_critere_jeu"></h3>
+    <img id="image_critere_jeu" style="display:none;">
+    <div id="cases_regions_jeu"></div>
+    <button id="btn_valider_regions" style="background:#4CAF50;">Valider</button>
+    <div id="feedback_regions"></div>
+    <button id="btn_suivant_regions">Question suivante</button>
+    <button class="btn-petit" id="btn_quitter_regions">Quitter</button>
+  </div>
+
+  <canvas id="canvas_feu" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getDatabase, ref, set, get, update, onValue, push } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAAgvcm1-Ruq87kAMDqInMD1dj18VBYQiI",
+    authDomain: "jeuimage-c2c20.firebaseapp.com",
+    databaseURL: "https://jeuimage-c2c20-default-rtdb.firebaseio.com",
+    projectId: "jeuimage-c2c20",
+    storageBucket: "jeuimage-c2c20.firebasestorage.app",
+    messagingSenderId: "776108150890",
+    appId: "1:776108150890:web:f6ced9dc794c383c01ba13"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const MDP_ADMIN = "theme2026";
+
+  const SECTIONS_DEFAUT = { s1: { nom: "General" } };
+  const THEMES_DEFAUT = {
+    t1: { texte: "Abricot", image: "https://i.imgur.com/203zFh4.png", section: "s1" },
+    t2: { texte: "Orange", image: "https://i.imgur.com/gVWG4HB.jpeg", section: "s1" },
+    t3: { texte: "Poire", image: "https://i.imgur.com/rzHnGaq.jpeg", section: "s1" },
+    t4: { texte: "Papaye", image: "https://i.imgur.com/IGs1lcZ.jpeg", section: "s1" },
+    t5: { texte: "Café", image: "https://i.imgur.com/wA4zIcI.jpeg", section: "s1" },
+    t6: { texte: "Cacao", image: "https://i.imgur.com/1HWBovG.jpeg", section: "s1" },
+    t7: { texte: "Cinema", image: "https://i.imgur.com/zEQlNVT.jpeg", section: "s1" },
+    t8: { texte: "Kiwi", image: "https://i.imgur.com/h0QDSCc.png", section: "s1" },
+    t9: { texte: "Madeleine", image: "https://i.imgur.com/QepJzYG.jpeg", section: "s1" },
+    t10: { texte: "Mangue", image: "https://i.imgur.com/tLNkhpQ.jpeg", section: "s1" },
+    t11: { texte: "Chocolat", image: "https://i.imgur.com/Ag2XMA6.png", section: "s1" }
+  };
+
+  let monCode = "";
+  let monPseudo = "";
+  let cleThemeEnEdition = null;
+  let motsElimines = new Set();
+  let signatureThemesPossibles = "";
+  let cleRegionEnEdition = null;
+  let cleCritereEnEdition = null;
+  let imageProposCompressee = "";
+
+  // ============ NAVIGATION GENERALE ============
+
+  function afficherEcran(id) {
+    [
+      "ecran_menu_principal", "ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin",
+      "ecran_proposition", "ecran_admin", "ecran_accueil_quiz", "ecran_quiz",
+      "ecran_accueil_regions", "ecran_jeu_regions"
+    ].forEach(e => {
+      document.getElementById(e).style.display = (e === id) ? "block" : "none";
+    });
+  }
+
+  document.getElementById("btn_menu_devine").addEventListener("click", () => {
+    afficherEcran("ecran_accueil");
+  });
+  document.getElementById("btn_retour_menu1").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+  document.getElementById("btn_retour_menu_fin").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_menu_quiz").addEventListener("click", () => {
+    afficherEcran("ecran_accueil_quiz");
+  });
+  document.getElementById("btn_retour_menu_quiz").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_menu_regions").addEventListener("click", () => {
+    afficherEcran("ecran_accueil_regions");
+  });
+  document.getElementById("btn_retour_menu_regions").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+
+  document.getElementById("btn_admin_menu").addEventListener("click", () => {
+    afficherEcran("ecran_admin");
+    document.getElementById("admin_connexion").style.display = "block";
+    document.getElementById("admin_panneau").style.display = "none";
+    document.getElementById("edit_mdp_admin").value = "";
+  });
+  document.getElementById("btn_retour_admin").addEventListener("click", () => {
+    afficherEcran("ecran_menu_principal");
+  });
+  document.getElementById("btn_retour_admin2").addEventListener("click", () => {
+    annulerEditionTheme();
+    annulerEditionRegion();
+    annulerEditionCritere();
+    afficherEcran("ecran_menu_principal");
+  });
+
+  // ============================================================
+  // ============ JEU 1 : DEVINE LE MOT (multijoueur) ===========
+  // ============================================================
+
+  function afficherSalleAttente(code) {
+    afficherEcran("ecran_attente");
+    document.getElementById("code_affiche").innerText = code;
+  }
+
+  async function initSectionsSiVide() {
+    const snap = await get(ref(db, "sections"));
+    if (!snap.val()) await set(ref(db, "sections"), SECTIONS_DEFAUT);
+  }
+
+  async function initThemesSiVide() {
+    const snap = await get(ref(db, "themes"));
+    if (!snap.val()) await set(ref(db, "themes"), THEMES_DEFAUT);
+  }
+
+  async function chargerSectionsAccueil() {
+    await initSectionsSiVide();
+    const snap = await get(ref(db, "sections"));
+    const data = snap.val() || {};
+    const select = document.getElementById("select_section");
+    select.innerHTML = "";
+    Object.keys(data).forEach(cle => {
+      const option = document.createElement("option");
+      option.value = cle;
+      option.innerText = data[cle].nom;
+      select.appendChild(option);
+    });
+  }
+
+  async function assignerThemesSiHote(noms, etat) {
+    if (etat.hote !== monPseudo) return;
+    if (etat.phase && etat.phase !== "attente") return;
+    if (noms.length < 2) return;
+
+    await initThemesSiVide();
+    const themesSnap = await get(ref(db, "themes"));
+    const themesData = themesSnap.val() || {};
+
+    let themesSection = Object.values(themesData).filter(t => t.section === etat.section);
+    if (themesSection.length < 2) themesSection = Object.values(themesData);
+
+    const melange = [...themesSection].sort(() => Math.random() - 0.5);
+    const ordre = [...noms].sort(() => Math.random() - 0.5);
+    const themesDisponibles = themesSection.map(t => ({ texte: t.texte, image: t.image || "" }));
+
+    const updates = {};
+    updates["rooms/" + monCode + "/joueurs/" + noms[0] + "/theme"] = melange[0];
+    updates["rooms/" + monCode + "/joueurs/" + noms[1] + "/theme"] = melange[1];
+    updates["rooms/" + monCode + "/etat/ordre"] = ordre;
+    updates["rooms/" + monCode + "/etat/tour"] = 0;
+    updates["rooms/" + monCode + "/etat/phase"] = "jeu";
+    updates["rooms/" + monCode + "/etat/themesDisponibles"] = themesDisponibles;
+    await update(ref(db), updates);
+  }
+
+  function afficherTheme(theme) {
+    const div = document.getElementById("mon_theme");
+    if (!theme) { div.innerHTML = ""; document.getElementById("info_theme").innerHTML = ""; return; }
+    let html = "";
+    if (theme.image) html += '<img src="' + theme.image + '" style="max-width:180px;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px;">';
+    if (theme.texte) html += '<div>' + theme.texte + '</div>';
+    div.innerHTML = html;
+    document.getElementById("info_theme").innerHTML = theme.info ? theme.info : "Aucune information disponible pour ce mot.";
+  }
+
+  function afficherHistorique(historique) {
+    const liste = document.getElementById("historique");
+    liste.innerHTML = "";
+    Object.keys(historique).sort((a, b) => a - b).forEach(k => {
+      const item = historique[k];
+      const li = document.createElement("li");
+      if (item.type === "question") {
+        const badge = item.reponse === "oui" ? '<span class="badge-oui">Oui</span>' : '<span class="badge-non">Non</span>';
+        li.innerHTML = item.joueur + ' a demande : ' + item.mot + ' -> ' + badge;
+      } else if (item.type === "indice") {
+        li.innerHTML = '<b>' + item.joueur + '</b> a donne un indice : ' + item.mot;
+      } else {
+        li.innerHTML = item.joueur + ' a tente de deviner : ' + item.mot + ' -> <span class="badge-non">Rate</span>';
+      }
+      liste.appendChild(li);
+    });
+  }
+
+  function afficherThemesPossibles(liste) {
+    const conteneur = document.getElementById("liste_themes_possibles");
+
+    // Si la liste des mots a change (nouvelle manche), on oublie les mots barres precedents
+    const signa
