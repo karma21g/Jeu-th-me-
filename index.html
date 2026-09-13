@@ -5,71 +5,189 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jeux de Themes</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2196F3">
+<meta name="theme-color" content="#FF6B6B">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body { font-family: sans-serif; padding: 20px; }
-  input, button, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; font-family: inherit; }
-  button { background: #2196F3; color: white; border: none; border-radius: 8px; }
-  .btn-oui { background: #4CAF50; }
-  .btn-non { background: #F44336; }
-  .btn-petit { width: auto; display: inline-block; padding: 6px 14px; font-size: 14px; background: #757575; }
+  :root {
+    --corail: #FF6B6B;
+    --corail-sombre: #E85555;
+    --turquoise: #17C3B2;
+    --turquoise-sombre: #119489;
+    --jaune: #FFC145;
+    --menthe: #06D6A0;
+    --rose-vif: #EF476F;
+    --violet-nuit: #3D3466;
+    --creme: #FFF7E8;
+    --creme-carte: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    padding: 20px;
+    margin: 0;
+    color: var(--violet-nuit);
+    background: radial-gradient(circle at 15% 0%, #FFE9C7 0%, var(--creme) 45%),
+                radial-gradient(circle at 100% 100%, #FFD9DF 0%, transparent 55%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  h2, h3, h4 {
+    font-family: 'Fredoka', sans-serif;
+    color: var(--violet-nuit);
+    font-weight: 600;
+  }
+
+  input, button, select, textarea {
+    width: 100%; padding: 13px; margin: 8px 0; font-size: 16px;
+    box-sizing: border-box; font-family: 'Nunito', sans-serif;
+  }
+
+  input, select, textarea {
+    border: 2px solid #F0E6D6; border-radius: 12px; background: var(--creme-carte);
+    color: var(--violet-nuit);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--turquoise); }
+
+  button {
+    background: var(--corail); color: white; border: none; border-radius: 14px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600; letter-spacing: 0.2px;
+    box-shadow: 0 4px 0 var(--corail-sombre);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    cursor: pointer;
+  }
+  button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--corail-sombre);
+  }
+  button:disabled { opacity: 0.55; box-shadow: none; transform: none; }
+
+  .btn-oui { background: var(--menthe); box-shadow: 0 4px 0 #049E77; }
+  .btn-non { background: var(--rose-vif); box-shadow: 0 4px 0 #C22D50; }
+  .btn-petit {
+    width: auto; display: inline-block; padding: 8px 16px; font-size: 14px;
+    background: var(--violet-nuit); box-shadow: 0 3px 0 #241E3D;
+  }
+
   #ecran_accueil, #ecran_attente, #ecran_jeu, #ecran_fin, #ecran_admin, #ecran_proposition,
   #ecran_accueil_quiz, #ecran_quiz, #ecran_quiz_fin { display: none; text-align: center; }
-  #code_affiche { font-size: 2em; font-weight: bold; margin: 20px 0; }
+
+  #code_affiche {
+    font-family: 'Fredoka', sans-serif; font-size: 2.2em; font-weight: 700;
+    margin: 20px 0; color: var(--turquoise-sombre); letter-spacing: 2px;
+  }
+
   #liste_joueurs, #historique { list-style: none; padding: 0; text-align: left; }
-  #liste_joueurs li, #historique li { padding: 8px; background: #eee; margin: 4px 0; border-radius: 6px; }
-  .badge-oui { color: #4CAF50; font-weight: bold; }
-  .badge-non { color: #F44336; font-weight: bold; }
-  #mon_theme { font-size: 1.3em; font-weight: bold; background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
+  #liste_joueurs li, #historique li {
+    padding: 10px 12px; background: var(--creme-carte); margin: 6px 0; border-radius: 12px;
+    border-left: 5px solid var(--turquoise); box-shadow: 0 2px 6px rgba(61,52,102,0.08);
+  }
+
+  .badge-oui { color: #0B8A67; font-weight: 800; }
+  .badge-non { color: var(--rose-vif); font-weight: 800; }
+
+  #mon_theme {
+    font-family: 'Fredoka', sans-serif; font-size: 1.3em; font-weight: 600;
+    background: linear-gradient(135deg, #FFF4D6, #FFE8B0);
+    padding: 14px; border-radius: 16px; margin: 15px 0;
+    border: 2px dashed var(--jaune);
+  }
+
   #choix_action { display: flex; gap: 8px; }
   #choix_action button { flex: 1; }
-  .carte_theme { display: flex; align-items: center; gap: 10px; background: #eee; padding: 8px; border-radius: 6px; margin: 6px 0; text-align: left; }
-  .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
+
+  .carte_theme {
+    display: flex; align-items: center; gap: 10px; background: var(--creme-carte);
+    padding: 10px; border-radius: 14px; margin: 8px 0; text-align: left;
+    box-shadow: 0 2px 8px rgba(61,52,102,0.08);
+  }
+  .carte_theme img { width: 44px; height: 44px; object-fit: cover; border-radius: 10px; }
   .carte_theme span { flex: 1; }
-  .carte_theme button { width: auto; padding: 6px 10px; margin: 0; background: #F44336; font-size: 13px; }
-  .carte_theme .btn-modifier { background: #FF9800; margin-right: 6px; }
-  .carte_theme .btn-valider-prop { background: #4CAF50; margin-right: 6px; }
+  .carte_theme button {
+    width: auto; padding: 7px 12px; margin: 0; background: var(--rose-vif);
+    font-size: 13px; box-shadow: 0 3px 0 #C22D50;
+  }
+  .carte_theme .btn-modifier { background: var(--jaune); box-shadow: 0 3px 0 #D69B1F; margin-right: 6px; color: var(--violet-nuit); }
+  .carte_theme .btn-valider-prop { background: var(--menthe); box-shadow: 0 3px 0 #049E77; margin-right: 6px; }
   .carte_theme.elimine { opacity: 0.4; }
   .carte_theme.elimine span { text-decoration: line-through; }
   #liste_themes_possibles .carte_theme { cursor: pointer; }
   #liste_themes_possibles, #historique { display: none; text-align: left; }
+
   .boutons_secondaires { display: flex; gap: 6px; }
   .boutons_secondaires button { flex: 1; }
-  #btn_admin_menu { width: auto; display: block; margin: 30px auto 0; padding: 4px 10px; font-size: 12px; background: transparent; color: #bbb; border: none; }
-  .btn-menu-jeu { padding: 20px; font-size: 18px; margin: 10px 0; }
-  .bloc_admin_jeu { border: 2px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 18px 0; }
-  .titre_bloc_jeu { background: #2196F3; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
-  .titre_bloc_jeu2 { background: #009688; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
-  #apercu_photo_proposition, #apercu_nouvelle_photo { max-width: 180px; max-height: 180px; border-radius: 8px; display: none; margin: 8px auto; }
-  #image_quiz { max-width: 220px; max-height: 220px; border-radius: 8px; display: block; margin: 0 auto 14px; }
+
+  #btn_admin_menu {
+    width: auto; display: block; margin: 30px auto 0; padding: 4px 10px;
+    font-size: 12px; background: transparent; color: #C9BFAE; border: none;
+    box-shadow: none; font-family: 'Nunito', sans-serif;
+  }
+
+  .btn-menu-jeu {
+    padding: 26px 20px; font-size: 20px; margin: 12px 0; border-radius: 20px;
+  }
+  #btn_menu_devine { background: var(--corail); box-shadow: 0 5px 0 var(--corail-sombre); }
+  #btn_menu_quiz { background: var(--turquoise); box-shadow: 0 5px 0 var(--turquoise-sombre); }
+
+  .bloc_admin_jeu {
+    border: 2px solid #F0E6D6; border-radius: 16px; padding: 14px; margin: 18px 0;
+    background: var(--creme-carte);
+  }
+  .titre_bloc_jeu {
+    background: var(--corail); color: white; padding: 10px 12px; border-radius: 10px;
+    margin: -14px -14px 12px -14px; font-family: 'Fredoka', sans-serif;
+  }
+  .titre_bloc_jeu2 {
+    background: var(--turquoise); color: white; padding: 10px 12px; border-radius: 10px;
+    margin: -14px -14px 12px -14px; font-family: 'Fredoka', sans-serif;
+  }
+
+  #apercu_photo_proposition, #apercu_nouvelle_photo {
+    max-width: 180px; max-height: 180px; border-radius: 14px; display: none; margin: 8px auto;
+  }
+  #image_quiz { max-width: 220px; max-height: 220px; border-radius: 16px; display: block; margin: 0 auto 14px; box-shadow: 0 4px 14px rgba(61,52,102,0.15); }
   #texte_quiz { display: none; }
-  .option_image_quiz { display: inline-block; margin: 6px; border: 4px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; vertical-align: top; }
+
+  .option_image_quiz {
+    display: inline-block; margin: 6px; border: 4px solid transparent; border-radius: 14px;
+    overflow: hidden; cursor: pointer; vertical-align: top; box-shadow: 0 3px 8px rgba(61,52,102,0.12);
+  }
   .option_image_quiz img { width: 110px; height: 110px; object-fit: cover; display: block; }
   #options_quiz { text-align: center; }
-  #etat_connexion_quiz { font-size: 13px; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 4px; }
-  .connexion-ok { background: #e8f5e9; color: #2e7d32; }
-  .connexion-off { background: #fff3e0; color: #e65100; }
-  #btn_suivant_quiz { background: #4CAF50; display: none; }
-  #score_quiz { font-size: 1.2em; font-weight: bold; }
+
+  #etat_connexion_quiz {
+    font-size: 13px; padding: 9px; border-radius: 10px; text-align: center; margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .connexion-ok { background: #DFFBF2; color: #0B8A67; }
+  .connexion-off { background: #FFF0DB; color: #C1610A; }
+
+  #btn_suivant_quiz { background: var(--menthe); box-shadow: 0 4px 0 #049E77; display: none; }
+  #score_quiz { font-family: 'Fredoka', sans-serif; font-size: 1.3em; font-weight: 600; color: var(--turquoise-sombre); }
+
   .reponses_5 { display: flex; flex-wrap: wrap; gap: 6px; }
-  .reponses_5 button { flex: 1 1 30%; font-size: 12px; padding: 10px 4px; margin: 0; }
-  .btn-peut-etre-oui { background: #AED581; }
-  .btn-je-ne-sais-pas { background: #9E9E9E; }
-  .btn-peut-etre-non { background: #FFB74D; }
-  .badge-peut-etre-oui { color: #689F38; font-weight: bold; }
-  .badge-je-ne-sais-pas { color: #616161; font-weight: bold; }
-  .badge-peut-etre-non { color: #EF6C00; font-weight: bold; }
+  .reponses_5 button { flex: 1 1 30%; font-size: 12px; padding: 12px 4px; margin: 0; }
+  .btn-peut-etre-oui { background: #9FE6B8; box-shadow: 0 4px 0 #6FBE8C; color: var(--violet-nuit); }
+  .btn-je-ne-sais-pas { background: #C9BFAE; box-shadow: 0 4px 0 #9C9382; color: var(--violet-nuit); }
+  .btn-peut-etre-non { background: #FFC98A; box-shadow: 0 4px 0 #DB9F55; color: var(--violet-nuit); }
+  .badge-peut-etre-oui { color: #3E9A5D; font-weight: 800; }
+  .badge-je-ne-sais-pas { color: #7A7264; font-weight: 800; }
+  .badge-peut-etre-non { color: #C1710A; font-weight: 800; }
 </style>
 </head>
 <body>
 
   <!-- ============ MENU PRINCIPAL ============ -->
   <div id="ecran_menu_principal">
-    <h2 style="text-align:center;">Choisis un jeu</h2>
-    <button class="btn-menu-jeu" id="btn_menu_devine">Devine le mot</button>
-    <button class="btn-menu-jeu" id="btn_menu_quiz" style="background:#009688;">Quiz</button>
+    <h2 style="text-align:center; font-size:1.6em;">🎉 Choisis un jeu</h2>
+    <button class="btn-menu-jeu" id="btn_menu_devine">🕵️ Devine le mot</button>
+    <button class="btn-menu-jeu" id="btn_menu_quiz">🧠 Quiz</button>
     <button id="btn_admin_menu">Admin</button>
   </div>
 
@@ -93,8 +211,8 @@
 
   <div id="ecran_jeu">
     <p>Ton mot secret :</p>
-    <button class="btn-petit" id="btn_info_theme" style="background:#FF9800;">Informations</button>
-    <div id="info_theme" style="display:none; text-align:left; background:#fff3e0; padding:10px; border-radius:8px; margin:8px 0;"></div>
+    <button class="btn-petit" id="btn_info_theme" style="background:#FF9F1C;">Informations</button>
+    <div id="info_theme" style="display:none; text-align:left; background:#FFF0DB; padding:10px; border-radius:8px; margin:8px 0;"></div>
     <div id="mon_theme"></div>
     <div class="boutons_secondaires">
       <button class="btn-petit" id="btn_historique">Historique</button>
@@ -109,7 +227,7 @@
     <h2 id="message_fin"></h2>
     <p id="themes_reveles"></p>
     <button id="btn_rejouer">Rejouer</button>
-    <button id="btn_proposer_mot" style="background:#FF9800;">Proposer un mot</button>
+    <button id="btn_proposer_mot" style="background:#FF9F1C;">Proposer un mot</button>
     <button class="btn-petit" id="btn_retour_menu_fin">Retour au menu</button>
   </div>
 
@@ -180,7 +298,7 @@
       <option value="nom">Deviner le nom (a partir d'une image)</option>
       <option value="image">Deviner l'image (a partir d'un nom)</option>
     </select>
-    <button id="btn_jouer_quiz" style="background:#009688;">Jouer</button>
+    <button id="btn_jouer_quiz" style="background:#17C3B2;">Jouer</button>
     <button id="btn_maj_donnees_quiz" class="btn-petit">Mettre a jour les donnees</button>
     <button class="btn-petit" id="btn_retour_menu_quiz">Retour au menu</button>
   </div>
@@ -198,7 +316,7 @@
   <div id="ecran_quiz_fin">
     <h2 style="text-align:center;">Quiz termine !</h2>
     <p id="score_quiz_fin" style="font-size:1.2em; font-weight:bold;"></p>
-    <button id="btn_rejouer_quiz" style="background:#009688;">Rejouer</button>
+    <button id="btn_rejouer_quiz" style="background:#17C3B2;">Rejouer</button>
     <button class="btn-petit" id="btn_quitter_quiz_fin">Retour au menu</button>
   </div>
 
@@ -1225,17 +1343,17 @@
       if (el.tagName === "BUTTON") el.disabled = true;
       const estLaBonneReponse = el.dataset.texte === themeCourantQuiz.texte;
       if (modeQuizActuel === "image") {
-        el.style.borderColor = estLaBonneReponse ? "#4CAF50" : (el === elementClique ? "#F44336" : "transparent");
+        el.style.borderColor = estLaBonneReponse ? "#06D6A0" : (el === elementClique ? "#EF476F" : "transparent");
       } else {
-        el.style.background = estLaBonneReponse ? "#4CAF50" : (el === elementClique ? "#F44336" : "");
+        el.style.background = estLaBonneReponse ? "#06D6A0" : (el === elementClique ? "#EF476F" : "");
       }
     });
 
     if (estCorrect) {
       scoreQuiz++;
-      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#4CAF50; font-weight:bold;'>Bonne reponse !</p>";
+      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#06D6A0; font-weight:bold;'>Bonne reponse !</p>";
     } else {
-      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#F44336; font-weight:bold;'>Rate ! C'etait : " + themeCourantQuiz.texte + "</p>";
+      document.getElementById("feedback_quiz").innerHTML = "<p style='color:#EF476F; font-weight:bold;'>Rate ! C'etait : " + themeCourantQuiz.texte + "</p>";
     }
     document.getElementById("score_quiz").innerText = "Score : " + scoreQuiz + " / " + totalQuestionsQuiz;
 
