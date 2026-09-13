@@ -16,7 +16,7 @@
   .btn-non { background: #F44336; }
   .btn-petit { width: auto; display: inline-block; padding: 6px 14px; font-size: 14px; background: #757575; }
   #ecran_accueil, #ecran_attente, #ecran_jeu, #ecran_fin, #ecran_admin, #ecran_proposition,
-  #ecran_accueil_quiz, #ecran_quiz, #ecran_accueil_regions, #ecran_jeu_regions { display: none; text-align: center; }
+  #ecran_accueil_quiz, #ecran_quiz, #ecran_quiz_fin { display: none; text-align: center; }
   #code_affiche { font-size: 2em; font-weight: bold; margin: 20px 0; }
   #liste_joueurs, #historique { list-style: none; padding: 0; text-align: left; }
   #liste_joueurs li, #historique li { padding: 8px; background: #eee; margin: 4px 0; border-radius: 6px; }
@@ -42,21 +42,25 @@
   .bloc_admin_jeu { border: 2px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 18px 0; }
   .titre_bloc_jeu { background: #2196F3; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
   .titre_bloc_jeu2 { background: #009688; color: white; padding: 8px 12px; border-radius: 6px; margin: -12px -12px 12px -12px; }
-  .case_region { display: flex; align-items: center; gap: 8px; padding: 6px; background: #eee; margin: 3px 0; border-radius: 6px; text-align: left; }
-  .case_region input { width: auto; margin: 0; }
-  .case_region label { flex: 1; }
-  #cases_regions_jeu { text-align: left; }
-  #cases_regions_jeu .case_region.correct { background: #c8e6c9; }
-  #cases_regions_jeu .case_region.incorrect { background: #ffcdd2; }
-  #apercu_photo_proposition { max-width: 180px; max-height: 180px; border-radius: 8px; display: none; margin: 8px auto; }
-  #image_critere_jeu { max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin: 0 auto 10px; }
+  #apercu_photo_proposition, #apercu_nouvelle_photo { max-width: 180px; max-height: 180px; border-radius: 8px; display: none; margin: 8px auto; }
   #image_quiz { max-width: 220px; max-height: 220px; border-radius: 8px; display: block; margin: 0 auto 14px; }
+  #texte_quiz { display: none; }
+  .option_image_quiz { display: inline-block; margin: 6px; border: 4px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; vertical-align: top; }
+  .option_image_quiz img { width: 110px; height: 110px; object-fit: cover; display: block; }
+  #options_quiz { text-align: center; }
   #etat_connexion_quiz { font-size: 13px; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 4px; }
   .connexion-ok { background: #e8f5e9; color: #2e7d32; }
   .connexion-off { background: #fff3e0; color: #e65100; }
   #btn_suivant_quiz { background: #4CAF50; display: none; }
-  #btn_suivant_regions { background: #4CAF50; display: none; }
-  #score_quiz, #score_regions { font-size: 1.2em; font-weight: bold; }
+  #score_quiz { font-size: 1.2em; font-weight: bold; }
+  .reponses_5 { display: flex; flex-wrap: wrap; gap: 6px; }
+  .reponses_5 button { flex: 1 1 30%; font-size: 12px; padding: 10px 4px; margin: 0; }
+  .btn-peut-etre-oui { background: #AED581; }
+  .btn-je-ne-sais-pas { background: #9E9E9E; }
+  .btn-peut-etre-non { background: #FFB74D; }
+  .badge-peut-etre-oui { color: #689F38; font-weight: bold; }
+  .badge-je-ne-sais-pas { color: #616161; font-weight: bold; }
+  .badge-peut-etre-non { color: #EF6C00; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -66,7 +70,6 @@
     <h2 style="text-align:center;">Choisis un jeu</h2>
     <button class="btn-menu-jeu" id="btn_menu_devine">Devine le mot</button>
     <button class="btn-menu-jeu" id="btn_menu_quiz" style="background:#009688;">Quiz</button>
-    <button class="btn-menu-jeu" id="btn_menu_regions" style="background:#FF9800;">Regions de Madagascar</button>
     <button id="btn_admin_menu">Admin</button>
   </div>
 
@@ -150,6 +153,9 @@
         <select id="select_section_theme"></select>
         <input type="text" id="edit_nouveau_nom" placeholder="Nom du mot">
         <input type="text" id="edit_nouvelle_image" placeholder="Lien de l'image (URL)">
+        <p style="margin:4px 0; font-size:13px; color:#666;">OU prends/choisis une photo :</p>
+        <input type="file" accept="image/*" id="edit_nouvelle_photo_fichier">
+        <img id="apercu_nouvelle_photo">
         <textarea id="edit_nouvelle_info" placeholder="Information sur le mot (optionnel)" rows="3"></textarea>
         <button id="btn_ajouter_theme">Ajouter</button>
         <button class="btn-petit" id="btn_annuler_edition">Annuler la modification</button>
@@ -157,27 +163,6 @@
         <p style="margin:4px 0; font-size:13px; color:#666;">Filtrer par section :</p>
         <select id="select_filtre_themes"></select>
         <div id="liste_themes_admin"></div>
-      </div>
-
-      <div class="bloc_admin_jeu">
-        <h3 class="titre_bloc_jeu2">Jeu 3 : Regions de Madagascar</h3>
-
-        <h4>Ajouter une region</h4>
-        <input type="text" id="edit_nouvelle_region" placeholder="Nom de la region">
-        <button id="btn_ajouter_region" style="background:#FF9800;">Ajouter la region</button>
-        <button class="btn-petit" id="btn_annuler_edition_region">Annuler la modification</button>
-        <h4>Regions actuelles</h4>
-        <div id="liste_regions_admin"></div>
-
-        <h4>Ajouter un critere</h4>
-        <input type="text" id="edit_nouveau_critere" placeholder="Texte du critere (ex: Regions cotieres)">
-        <input type="text" id="edit_image_critere" placeholder="Lien de l'image (optionnel)">
-        <p style="text-align:left; margin-bottom:0;">Coche les regions concernees :</p>
-        <div id="cases_regions_critere"></div>
-        <button id="btn_ajouter_critere" style="background:#FF9800;">Ajouter le critere</button>
-        <button class="btn-petit" id="btn_annuler_edition_critere">Annuler la modification</button>
-        <h4>Criteres actuels</h4>
-        <div id="liste_criteres_admin"></div>
       </div>
 
       <button class="btn-petit" id="btn_retour_admin2">Retour</button>
@@ -190,6 +175,11 @@
     <p id="etat_connexion_quiz"></p>
     <p style="text-align:left; margin-bottom:0;">Choisis une section :</p>
     <select id="select_section_quiz"></select>
+    <p style="text-align:left; margin-bottom:0;">Mode :</p>
+    <select id="select_mode_quiz">
+      <option value="nom">Deviner le nom (a partir d'une image)</option>
+      <option value="image">Deviner l'image (a partir d'un nom)</option>
+    </select>
     <button id="btn_jouer_quiz" style="background:#009688;">Jouer</button>
     <button id="btn_maj_donnees_quiz" class="btn-petit">Mettre a jour les donnees</button>
     <button class="btn-petit" id="btn_retour_menu_quiz">Retour au menu</button>
@@ -198,30 +188,18 @@
   <div id="ecran_quiz">
     <p id="score_quiz">Score : 0 / 0</p>
     <img id="image_quiz">
+    <h3 id="texte_quiz"></h3>
     <div id="options_quiz"></div>
     <div id="feedback_quiz"></div>
     <button id="btn_suivant_quiz">Question suivante</button>
     <button class="btn-petit" id="btn_quitter_quiz">Quitter</button>
   </div>
 
-  <!-- ============ JEU 3 : REGIONS DE MADAGASCAR ============ -->
-  <div id="ecran_accueil_regions">
-    <h2 style="text-align:center;">Regions de Madagascar</h2>
-    <p id="etat_connexion_regions"></p>
-    <button id="btn_jouer_regions" style="background:#FF9800;">Jouer</button>
-    <button id="btn_maj_donnees_regions" class="btn-petit">Mettre a jour les donnees</button>
-    <button class="btn-petit" id="btn_retour_menu_regions">Retour au menu</button>
-  </div>
-
-  <div id="ecran_jeu_regions">
-    <p id="score_regions">Score : 0 / 0</p>
-    <h3 id="texte_critere_jeu"></h3>
-    <img id="image_critere_jeu" style="display:none;">
-    <div id="cases_regions_jeu"></div>
-    <button id="btn_valider_regions" style="background:#4CAF50;">Valider</button>
-    <div id="feedback_regions"></div>
-    <button id="btn_suivant_regions">Question suivante</button>
-    <button class="btn-petit" id="btn_quitter_regions">Quitter</button>
+  <div id="ecran_quiz_fin">
+    <h2 style="text-align:center;">Quiz termine !</h2>
+    <p id="score_quiz_fin" style="font-size:1.2em; font-weight:bold;"></p>
+    <button id="btn_rejouer_quiz" style="background:#009688;">Rejouer</button>
+    <button class="btn-petit" id="btn_quitter_quiz_fin">Retour au menu</button>
   </div>
 
   <canvas id="canvas_feu" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
@@ -265,17 +243,42 @@
   let cleThemeEnEdition = null;
   let motsElimines = new Set();
   let signatureThemesPossibles = "";
-  let cleRegionEnEdition = null;
-  let cleCritereEnEdition = null;
   let imageProposCompressee = "";
+  let imageAdminCompressee = "";
+
+  function compresserFichierImage(fichier, callback) {
+    const lecteur = new FileReader();
+    lecteur.onload = (evt) => {
+      const img = new Image();
+      img.onload = () => {
+        const tailleMax = 300;
+        let largeur = img.width;
+        let hauteur = img.height;
+        if (largeur > hauteur && largeur > tailleMax) {
+          hauteur = Math.round(hauteur * (tailleMax / largeur));
+          largeur = tailleMax;
+        } else if (hauteur > tailleMax) {
+          largeur = Math.round(largeur * (tailleMax / hauteur));
+          hauteur = tailleMax;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = largeur;
+        canvas.height = hauteur;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, largeur, hauteur);
+        callback(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = evt.target.result;
+    };
+    lecteur.readAsDataURL(fichier);
+  }
 
   // ============ NAVIGATION GENERALE ============
 
   function afficherEcran(id) {
     [
       "ecran_menu_principal", "ecran_accueil", "ecran_attente", "ecran_jeu", "ecran_fin",
-      "ecran_proposition", "ecran_admin", "ecran_accueil_quiz", "ecran_quiz",
-      "ecran_accueil_regions", "ecran_jeu_regions"
+      "ecran_proposition", "ecran_admin", "ecran_accueil_quiz", "ecran_quiz", "ecran_quiz_fin"
     ].forEach(e => {
       document.getElementById(e).style.display = (e === id) ? "block" : "none";
     });
@@ -298,13 +301,6 @@
     afficherEcran("ecran_menu_principal");
   });
 
-  document.getElementById("btn_menu_regions").addEventListener("click", () => {
-    afficherEcran("ecran_accueil_regions");
-  });
-  document.getElementById("btn_retour_menu_regions").addEventListener("click", () => {
-    afficherEcran("ecran_menu_principal");
-  });
-
   document.getElementById("btn_admin_menu").addEventListener("click", () => {
     afficherEcran("ecran_admin");
     document.getElementById("admin_connexion").style.display = "block";
@@ -316,8 +312,6 @@
   });
   document.getElementById("btn_retour_admin2").addEventListener("click", () => {
     annulerEditionTheme();
-    annulerEditionRegion();
-    annulerEditionCritere();
     afficherEcran("ecran_menu_principal");
   });
 
@@ -397,7 +391,15 @@
       const item = historique[k];
       const li = document.createElement("li");
       if (item.type === "question") {
-        const badge = item.reponse === "oui" ? '<span class="badge-oui">Oui</span>' : '<span class="badge-non">Non</span>';
+        const libellesReponse = {
+          "oui": ["Oui", "badge-oui"],
+          "peut-etre-oui": ["Peut-etre oui", "badge-peut-etre-oui"],
+          "je-ne-sais-pas": ["Je ne sais pas", "badge-je-ne-sais-pas"],
+          "peut-etre-non": ["Peut-etre non", "badge-peut-etre-non"],
+          "non": ["Non", "badge-non"]
+        };
+        const infosReponse = libellesReponse[item.reponse] || ["Non", "badge-non"];
+        const badge = '<span class="' + infosReponse[1] + '">' + infosReponse[0] + '</span>';
         li.innerHTML = item.joueur + ' a demande : ' + item.mot + ' -> ' + badge;
       } else if (item.type === "indice") {
         li.innerHTML = '<b>' + item.joueur + '</b> a donne un indice : ' + item.mot;
@@ -494,8 +496,17 @@
         document.getElementById("btn_incorrect").addEventListener("click", () => confirmerDevinette(false));
       } else {
         zone.innerHTML = '<p><b>' + action.joueur + '</b> te demande : ' + action.mot + ' - est-ce lie a ton mot ?</p>' +
-          '<button class="btn-oui" id="btn_oui">Oui</button><button class="btn-non" id="btn_non">Non</button>';
+          '<div class="reponses_5">' +
+          '<button class="btn-oui" id="btn_oui">Oui</button>' +
+          '<button class="btn-peut-etre-oui" id="btn_peut_etre_oui">Peut-etre oui</button>' +
+          '<button class="btn-je-ne-sais-pas" id="btn_ne_sais_pas">Je ne sais pas</button>' +
+          '<button class="btn-peut-etre-non" id="btn_peut_etre_non">Peut-etre non</button>' +
+          '<button class="btn-non" id="btn_non">Non</button>' +
+          '</div>';
         document.getElementById("btn_oui").addEventListener("click", () => repondre("oui"));
+        document.getElementById("btn_peut_etre_oui").addEventListener("click", () => repondre("peut-etre-oui"));
+        document.getElementById("btn_ne_sais_pas").addEventListener("click", () => repondre("je-ne-sais-pas"));
+        document.getElementById("btn_peut_etre_non").addEventListener("click", () => repondre("peut-etre-non"));
         document.getElementById("btn_non").addEventListener("click", () => repondre("non"));
       }
     } else if (joueurActif === monPseudo) {
@@ -508,6 +519,7 @@
       const selectDeviner = document.getElementById("select_deviner");
       selectDeviner.innerHTML = '<option value="">-- Choisis un mot --</option>';
       (etat.themesDisponibles || []).forEach(t => {
+        if (motsElimines.has(t.texte)) return;
         const opt = document.createElement("option");
         opt.value = t.texte;
         opt.innerText = t.texte;
@@ -981,6 +993,9 @@
       document.getElementById("edit_nouveau_nom").value = theme.texte;
       document.getElementById("edit_nouvelle_image").value = theme.image || "";
       document.getElementById("edit_nouvelle_info").value = theme.info || "";
+      document.getElementById("edit_nouvelle_photo_fichier").value = "";
+      document.getElementById("apercu_nouvelle_photo").style.display = "none";
+      imageAdminCompressee = "";
       document.getElementById("btn_ajouter_theme").innerText = "Enregistrer les modifications";
       document.getElementById("btn_annuler_edition").style.display = "block";
       document.getElementById("edit_nouveau_nom").scrollIntoView({ behavior: "smooth" });
@@ -1004,8 +1019,6 @@
     await chargerSectionsAdmin();
     await chargerThemesAdmin();
     await chargerPropositionsAdmin();
-    await chargerRegionsAdmin();
-    await chargerCriteresAdmin();
   });
 
   document.getElementById("select_filtre_themes").addEventListener("change", () => {
@@ -1025,9 +1038,20 @@
     }
   });
 
+  document.getElementById("edit_nouvelle_photo_fichier").addEventListener("change", (e) => {
+    const fichier = e.target.files[0];
+    if (!fichier) return;
+    compresserFichierImage(fichier, (dataUrl) => {
+      imageAdminCompressee = dataUrl;
+      const apercu = document.getElementById("apercu_nouvelle_photo");
+      apercu.src = dataUrl;
+      apercu.style.display = "block";
+    });
+  });
+
   document.getElementById("btn_ajouter_theme").addEventListener("click", async () => {
     const nom = document.getElementById("edit_nouveau_nom").value.trim();
-    const image = document.getElementById("edit_nouvelle_image").value.trim();
+    const image = imageAdminCompressee || document.getElementById("edit_nouvelle_image").value.trim();
     const info = document.getElementById("edit_nouvelle_info").value.trim();
     const sectionChoisie = document.getElementById("select_section_theme").value;
     if (!nom) { alert("Entre un nom de mot !"); return; }
@@ -1044,6 +1068,9 @@
       document.getElementById("edit_nouveau_nom").value = "";
       document.getElementById("edit_nouvelle_image").value = "";
       document.getElementById("edit_nouvelle_info").value = "";
+      document.getElementById("edit_nouvelle_photo_fichier").value = "";
+      document.getElementById("apercu_nouvelle_photo").style.display = "none";
+      imageAdminCompressee = "";
       await chargerThemesAdmin();
     } catch (err) {
       alert("Erreur lors de la sauvegarde du mot : " + err.message);
@@ -1057,181 +1084,11 @@
     document.getElementById("edit_nouveau_nom").value = "";
     document.getElementById("edit_nouvelle_image").value = "";
     document.getElementById("edit_nouvelle_info").value = "";
+    document.getElementById("edit_nouvelle_photo_fichier").value = "";
+    document.getElementById("apercu_nouvelle_photo").style.display = "none";
+    imageAdminCompressee = "";
   }
   document.getElementById("btn_annuler_edition").addEventListener("click", annulerEditionTheme);
-
-  // ============================================================
-  // ============ ESPACE ADMIN — JEU 3 (Regions) ============
-  // ============================================================
-
-  async function chargerRegionsAdmin() {
-    const snap = await get(ref(db, "regions"));
-    const data = snap.val() || {};
-    const conteneur = document.getElementById("liste_regions_admin");
-    conteneur.innerHTML = "";
-    const cles = Object.keys(data);
-    if (cles.length === 0) conteneur.innerHTML = "<p>Aucune region pour le moment.</p>";
-
-    cles.forEach(cle => {
-      const div = document.createElement("div");
-      div.className = "carte_theme";
-      div.innerHTML =
-        '<span>' + data[cle].nom + '</span>' +
-        '<button class="btn-modifier" data-cle="' + cle + '">Modifier</button>' +
-        '<button data-cle="' + cle + '">Supprimer</button>';
-      div.querySelector(".btn-modifier").addEventListener("click", () => {
-        cleRegionEnEdition = cle;
-        document.getElementById("edit_nouvelle_region").value = data[cle].nom;
-        document.getElementById("btn_ajouter_region").innerText = "Enregistrer les modifications";
-        document.getElementById("btn_annuler_edition_region").style.display = "block";
-        document.getElementById("edit_nouvelle_region").scrollIntoView({ behavior: "smooth" });
-      });
-      div.querySelectorAll("button")[1].addEventListener("click", async () => {
-        try {
-          await set(ref(db, "regions/" + cle), null);
-          await chargerRegionsAdmin();
-          await chargerCasesRegionsCritere();
-          await chargerCriteresAdmin();
-        } catch (err) {
-          alert("Erreur lors de la suppression : " + err.message);
-        }
-      });
-      conteneur.appendChild(div);
-    });
-
-    await chargerCasesRegionsCritere();
-  }
-
-  document.getElementById("btn_ajouter_region").addEventListener("click", async () => {
-    const nom = document.getElementById("edit_nouvelle_region").value.trim();
-    if (!nom) { alert("Entre un nom de region !"); return; }
-    try {
-      if (cleRegionEnEdition) {
-        await set(ref(db, "regions/" + cleRegionEnEdition), { nom: nom });
-        annulerEditionRegion();
-      } else {
-        const nouvelleRef = push(ref(db, "regions"));
-        await set(nouvelleRef, { nom: nom });
-        document.getElementById("edit_nouvelle_region").value = "";
-      }
-      await chargerRegionsAdmin();
-    } catch (err) {
-      alert("Erreur lors de la sauvegarde de la region : " + err.message);
-    }
-  });
-
-  function annulerEditionRegion() {
-    cleRegionEnEdition = null;
-    document.getElementById("btn_ajouter_region").innerText = "Ajouter la region";
-    document.getElementById("btn_annuler_edition_region").style.display = "none";
-    document.getElementById("edit_nouvelle_region").value = "";
-  }
-  document.getElementById("btn_annuler_edition_region").addEventListener("click", annulerEditionRegion);
-
-  async function chargerCasesRegionsCritere() {
-    const snap = await get(ref(db, "regions"));
-    const data = snap.val() || {};
-    const conteneur = document.getElementById("cases_regions_critere");
-    conteneur.innerHTML = "";
-    Object.keys(data).forEach(cle => {
-      const div = document.createElement("div");
-      div.className = "case_region";
-      div.innerHTML =
-        '<input type="checkbox" data-cle="' + cle + '">' +
-        '<label>' + data[cle].nom + '</label>';
-      conteneur.appendChild(div);
-    });
-  }
-
-  async function chargerCriteresAdmin() {
-    const criteresSnap = await get(ref(db, "criteres"));
-    const regionsSnap = await get(ref(db, "regions"));
-    const criteresData = criteresSnap.val() || {};
-    const regionsData = regionsSnap.val() || {};
-    const conteneur = document.getElementById("liste_criteres_admin");
-    conteneur.innerHTML = "";
-    const cles = Object.keys(criteresData);
-    if (cles.length === 0) { conteneur.innerHTML = "<p>Aucun critere pour le moment.</p>"; return; }
-
-    cles.forEach(cle => {
-      const critere = criteresData[cle];
-      const regionsCorrectes = critere.regionsCorrectes || {};
-      const nomsRegionsCorrectes = Object.keys(regionsCorrectes)
-        .filter(rc => regionsCorrectes[rc] && regionsData[rc])
-        .map(rc => regionsData[rc].nom)
-        .join(", ");
-
-      const div = document.createElement("div");
-      div.className = "carte_theme";
-      div.style.flexWrap = "wrap";
-      div.innerHTML =
-        (critere.image ? '<img src="' + critere.image + '">' : '') +
-        '<span>' + critere.texte + '<br><i style="font-size:12px;">Regions : ' + (nomsRegionsCorrectes || "aucune") + '</i></span>' +
-        '<button class="btn-modifier">Modifier</button>' +
-        '<button>Supprimer</button>';
-
-      div.querySelector(".btn-modifier").addEventListener("click", async () => {
-        cleCritereEnEdition = cle;
-        document.getElementById("edit_nouveau_critere").value = critere.texte;
-        document.getElementById("edit_image_critere").value = critere.image || "";
-        await chargerCasesRegionsCritere();
-        document.querySelectorAll("#cases_regions_critere input[type=checkbox]").forEach(cb => {
-          cb.checked = !!regionsCorrectes[cb.dataset.cle];
-        });
-        document.getElementById("btn_ajouter_critere").innerText = "Enregistrer les modifications";
-        document.getElementById("btn_annuler_edition_critere").style.display = "block";
-        document.getElementById("edit_nouveau_critere").scrollIntoView({ behavior: "smooth" });
-      });
-
-      div.querySelectorAll("button")[1].addEventListener("click", async () => {
-        try {
-          await set(ref(db, "criteres/" + cle), null);
-          await chargerCriteresAdmin();
-        } catch (err) {
-          alert("Erreur lors de la suppression : " + err.message);
-        }
-      });
-
-      conteneur.appendChild(div);
-    });
-  }
-
-  document.getElementById("btn_ajouter_critere").addEventListener("click", async () => {
-    const texte = document.getElementById("edit_nouveau_critere").value.trim();
-    const image = document.getElementById("edit_image_critere").value.trim();
-    if (!texte) { alert("Entre le texte du critere !"); return; }
-
-    const regionsCorrectes = {};
-    document.querySelectorAll("#cases_regions_critere input[type=checkbox]").forEach(cb => {
-      if (cb.checked) regionsCorrectes[cb.dataset.cle] = true;
-    });
-
-    try {
-      if (cleCritereEnEdition) {
-        await set(ref(db, "criteres/" + cleCritereEnEdition), { texte: texte, image: image, regionsCorrectes: regionsCorrectes });
-        annulerEditionCritere();
-      } else {
-        const nouvelleRef = push(ref(db, "criteres"));
-        await set(nouvelleRef, { texte: texte, image: image, regionsCorrectes: regionsCorrectes });
-        document.getElementById("edit_nouveau_critere").value = "";
-        document.getElementById("edit_image_critere").value = "";
-        await chargerCasesRegionsCritere();
-      }
-      await chargerCriteresAdmin();
-    } catch (err) {
-      alert("Erreur lors de la sauvegarde du critere : " + err.message);
-    }
-  });
-
-  function annulerEditionCritere() {
-    cleCritereEnEdition = null;
-    document.getElementById("btn_ajouter_critere").innerText = "Ajouter le critere";
-    document.getElementById("btn_annuler_edition_critere").style.display = "none";
-    document.getElementById("edit_nouveau_critere").value = "";
-    document.getElementById("edit_image_critere").value = "";
-    chargerCasesRegionsCritere();
-  }
-  document.getElementById("btn_annuler_edition_critere").addEventListener("click", annulerEditionCritere);
 
   // ============================================================
   // ============ JEU 2 : QUIZ (solo) ============
@@ -1242,14 +1099,17 @@
   let themeCourantQuiz = null;
   let scoreQuiz = 0;
   let totalQuestionsQuiz = 0;
+  let modeQuizActuel = "nom";
+  let reponduQuizCourant = false;
+  const NB_QUESTIONS_QUIZ = 20;
 
   function majEtatConnexionQuiz() {
     const p = document.getElementById("etat_connexion_quiz");
     if (navigator.onLine) { p.innerText = "En ligne"; p.className = "connexion-ok"; }
     else { p.innerText = "Hors ligne (donnees en cache utilisees)"; p.className = "connexion-off"; }
   }
-  window.addEventListener("online", () => { majEtatConnexionQuiz(); majEtatConnexionRegions(); });
-  window.addEventListener("offline", () => { majEtatConnexionQuiz(); majEtatConnexionRegions(); });
+  window.addEventListener("online", () => { majEtatConnexionQuiz(); });
+  window.addEventListener("offline", () => { majEtatConnexionQuiz(); });
 
   async function chargerSectionsQuiz() {
     let sectionsData = null;
@@ -1296,9 +1156,10 @@
     if (Object.keys(sectionsData).length === 0) select.innerHTML = "<option value=''>Aucune section disponible</option>";
   }
 
-  function demarrerQuiz(themes) {
+  function demarrerQuiz(themes, mode) {
     themesSectionQuiz = themes;
     themesRestantsQuiz = [];
+    if (mode) modeQuizActuel = mode;
     scoreQuiz = 0;
     totalQuestionsQuiz = 0;
     afficherEcran("ecran_quiz");
@@ -1306,60 +1167,100 @@
   }
 
   function questionSuivanteQuiz() {
+    reponduQuizCourant = false;
     if (themesRestantsQuiz.length === 0) themesRestantsQuiz = [...themesSectionQuiz];
     const indexChoisi = Math.floor(Math.random() * themesRestantsQuiz.length);
     themeCourantQuiz = themesRestantsQuiz[indexChoisi];
     themesRestantsQuiz.splice(indexChoisi, 1);
 
     const autresThemes = themesSectionQuiz.filter(t => t.texte !== themeCourantQuiz.texte);
-    const nbMauvaises = Math.min(5, autresThemes.length);
+    const nbMauvaisesMax = modeQuizActuel === "image" ? 3 : 5;
+    const nbMauvaises = Math.min(nbMauvaisesMax, autresThemes.length);
     const melangeAutres = [...autresThemes].sort(() => Math.random() - 0.5).slice(0, nbMauvaises);
     const options = [...melangeAutres, themeCourantQuiz].sort(() => Math.random() - 0.5);
 
     const image = document.getElementById("image_quiz");
-    if (themeCourantQuiz.image) { image.src = themeCourantQuiz.image; image.style.display = "block"; }
-    else image.style.display = "none";
-
+    const texteQuiz = document.getElementById("texte_quiz");
     const conteneur = document.getElementById("options_quiz");
     conteneur.innerHTML = "";
-    options.forEach(opt => {
-      const btn = document.createElement("button");
-      btn.innerText = opt.texte;
-      btn.addEventListener("click", () => validerReponseQuiz(opt, btn));
-      conteneur.appendChild(btn);
-    });
+
+    if (modeQuizActuel === "image") {
+      image.style.display = "none";
+      texteQuiz.style.display = "block";
+      texteQuiz.innerText = themeCourantQuiz.texte;
+      options.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "option_image_quiz";
+        div.dataset.texte = opt.texte;
+        div.innerHTML = opt.image ? '<img src="' + opt.image + '">' : '<p style="width:110px;">(pas d\'image)</p>';
+        div.addEventListener("click", () => validerReponseQuiz(opt, div));
+        conteneur.appendChild(div);
+      });
+    } else {
+      texteQuiz.style.display = "none";
+      if (themeCourantQuiz.image) { image.src = themeCourantQuiz.image; image.style.display = "block"; }
+      else image.style.display = "none";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.dataset.texte = opt.texte;
+        btn.innerText = opt.texte;
+        btn.addEventListener("click", () => validerReponseQuiz(opt, btn));
+        conteneur.appendChild(btn);
+      });
+    }
 
     document.getElementById("feedback_quiz").innerHTML = "";
     document.getElementById("btn_suivant_quiz").style.display = "none";
   }
 
-  function validerReponseQuiz(opt, btnClique) {
-    const boutons = document.querySelectorAll("#options_quiz button");
-    boutons.forEach(b => { b.disabled = true; });
+  function validerReponseQuiz(opt, elementClique) {
+    if (reponduQuizCourant) return;
+    reponduQuizCourant = true;
     totalQuestionsQuiz++;
     const estCorrect = opt.texte === themeCourantQuiz.texte;
 
+    const tousElements = document.querySelectorAll("#options_quiz button, #options_quiz .option_image_quiz");
+    tousElements.forEach(el => {
+      el.style.pointerEvents = "none";
+      if (el.tagName === "BUTTON") el.disabled = true;
+      const estLaBonneReponse = el.dataset.texte === themeCourantQuiz.texte;
+      if (modeQuizActuel === "image") {
+        el.style.borderColor = estLaBonneReponse ? "#4CAF50" : (el === elementClique ? "#F44336" : "transparent");
+      } else {
+        el.style.background = estLaBonneReponse ? "#4CAF50" : (el === elementClique ? "#F44336" : "");
+      }
+    });
+
     if (estCorrect) {
       scoreQuiz++;
-      btnClique.style.background = "#4CAF50";
       document.getElementById("feedback_quiz").innerHTML = "<p style='color:#4CAF50; font-weight:bold;'>Bonne reponse !</p>";
     } else {
-      btnClique.style.background = "#F44336";
-      boutons.forEach(b => { if (b.innerText === themeCourantQuiz.texte) b.style.background = "#4CAF50"; });
       document.getElementById("feedback_quiz").innerHTML = "<p style='color:#F44336; font-weight:bold;'>Rate ! C'etait : " + themeCourantQuiz.texte + "</p>";
     }
     document.getElementById("score_quiz").innerText = "Score : " + scoreQuiz + " / " + totalQuestionsQuiz;
-    document.getElementById("btn_suivant_quiz").style.display = "block";
+
+    const boutonSuivant = document.getElementById("btn_suivant_quiz");
+    boutonSuivant.innerText = totalQuestionsQuiz >= NB_QUESTIONS_QUIZ ? "Voir le score final" : "Question suivante";
+    boutonSuivant.style.display = "block";
+  }
+
+  function afficherFinQuiz() {
+    afficherEcran("ecran_quiz_fin");
+    document.getElementById("score_quiz_fin").innerText = "Score final : " + scoreQuiz + " / " + totalQuestionsQuiz;
   }
 
   document.getElementById("btn_jouer_quiz").addEventListener("click", async () => {
     const sectionCle = document.getElementById("select_section_quiz").value;
     if (!sectionCle) { alert("Aucune section disponible !"); return; }
+    const mode = document.getElementById("select_mode_quiz").value;
     const themes = await chargerThemesSectionQuiz(sectionCle);
     if (themes.length < 2) { alert("Il faut au moins 2 mots dans cette section pour jouer."); return; }
-    demarrerQuiz(themes);
+    demarrerQuiz(themes, mode);
   });
-  document.getElementById("btn_suivant_quiz").addEventListener("click", () => questionSuivanteQuiz());
+  document.getElementById("btn_suivant_quiz").addEventListener("click", () => {
+    if (totalQuestionsQuiz >= NB_QUESTIONS_QUIZ) afficherFinQuiz();
+    else questionSuivanteQuiz();
+  });
   document.getElementById("btn_quitter_quiz").addEventListener("click", () => afficherEcran("ecran_menu_principal"));
 
   document.getElementById("btn_maj_donnees_quiz").addEventListener("click", async () => {
@@ -1370,130 +1271,16 @@
     alert("Donnees mises a jour !");
   });
 
-  // ============================================================
-  // ============ JEU 3 : REGIONS DE MADAGASCAR (solo) ============
-  // ============================================================
-
-  let regionsToutesGame = [];
-  let criteresTousGame = [];
-  let critereCourantGame = null;
-  let regionsProposeesGame = [];
-  let scoreRegions = 0;
-  let totalPossiblesRegions = 0;
-
-  function majEtatConnexionRegions() {
-    const p = document.getElementById("etat_connexion_regions");
-    if (navigator.onLine) { p.innerText = "En ligne"; p.className = "connexion-ok"; }
-    else { p.innerText = "Hors ligne (donnees en cache utilisees)"; p.className = "connexion-off"; }
-  }
-
-  async function chargerDonneesRegionsJeu() {
-    let regionsData = null;
-    let criteresData = null;
-    if (navigator.onLine) {
-      try {
-        const regSnap = await get(ref(db, "regions"));
-        const critSnap = await get(ref(db, "criteres"));
-        regionsData = regSnap.val() || {};
-        criteresData = critSnap.val() || {};
-        localStorage.setItem("regions_cache", JSON.stringify({ regions: regionsData, criteres: criteresData, maj: Date.now() }));
-      } catch (err) { regionsData = null; criteresData = null; }
-    }
-    if (!regionsData) {
-      const cache = localStorage.getItem("regions_cache");
-      if (cache) {
-        const parsed = JSON.parse(cache);
-        regionsData = parsed.regions;
-        criteresData = parsed.criteres;
-      }
-    }
-    return { regions: regionsData || {}, criteres: criteresData || {} };
-  }
-
-  function demarrerJeuRegions(regionsData, criteresData) {
-    regionsToutesGame = Object.keys(regionsData).map(cle => ({ cle: cle, nom: regionsData[cle].nom }));
-    criteresTousGame = Object.keys(criteresData).map(cle => ({ cle: cle, texte: criteresData[cle].texte, image: criteresData[cle].image, regionsCorrectes: criteresData[cle].regionsCorrectes || {} }));
-    scoreRegions = 0;
-    totalPossiblesRegions = 0;
-    afficherEcran("ecran_jeu_regions");
-    questionSuivanteRegions();
-  }
-
-  function questionSuivanteRegions() {
-    critereCourantGame = criteresTousGame[Math.floor(Math.random() * criteresTousGame.length)];
-
-    const nbOptions = Math.min(4 + Math.floor(Math.random() * 3), regionsToutesGame.length);
-    regionsProposeesGame = [...regionsToutesGame].sort(() => Math.random() - 0.5).slice(0, nbOptions);
-
-    document.getElementById("texte_critere_jeu").innerText = critereCourantGame.texte;
-    const image = document.getElementById("image_critere_jeu");
-    if (critereCourantGame.image) { image.src = critereCourantGame.image; image.style.display = "block"; }
-    else image.style.display = "none";
-
-    const conteneur = document.getElementById("cases_regions_jeu");
-    conteneur.innerHTML = "";
-    regionsProposeesGame.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "case_region";
-      div.innerHTML = '<input type="checkbox" data-cle="' + r.cle + '"><label>' + r.nom + '</label>';
-      conteneur.appendChild(div);
-    });
-
-    document.getElementById("feedback_regions").innerHTML = "";
-    document.getElementById("btn_valider_regions").style.display = "block";
-    document.getElementById("btn_suivant_regions").style.display = "none";
-  }
-
-  document.getElementById("btn_valider_regions").addEventListener("click", () => {
-    const regionsCorrectes = critereCourantGame.regionsCorrectes || {};
-    let bonnesReponses = 0;
-
-    document.querySelectorAll("#cases_regions_jeu .case_region").forEach(div => {
-      const checkbox = div.querySelector("input");
-      checkbox.disabled = true;
-      const cle = checkbox.dataset.cle;
-      const estCorrecteEnVrai = !!regionsCorrectes[cle];
-      const joueurACoche = checkbox.checked;
-      if (estCorrecteEnVrai === joueurACoche) {
-        bonnesReponses++;
-        div.classList.add("correct");
-      } else {
-        div.classList.add("incorrect");
-      }
-    });
-
-    scoreRegions += bonnesReponses;
-    totalPossiblesRegions += regionsProposeesGame.length;
-    document.getElementById("score_regions").innerText = "Score : " + scoreRegions + " / " + totalPossiblesRegions;
-    document.getElementById("feedback_regions").innerHTML =
-      "<p style='font-weight:bold;'>" + bonnesReponses + " / " + regionsProposeesGame.length + " bonnes reponses sur cette question</p>";
-
-    document.getElementById("btn_valider_regions").style.display = "none";
-    document.getElementById("btn_suivant_regions").style.display = "block";
+  document.getElementById("btn_rejouer_quiz").addEventListener("click", () => {
+    demarrerQuiz(themesSectionQuiz, modeQuizActuel);
   });
-
-  document.getElementById("btn_suivant_regions").addEventListener("click", () => questionSuivanteRegions());
-  document.getElementById("btn_quitter_regions").addEventListener("click", () => afficherEcran("ecran_menu_principal"));
-
-  document.getElementById("btn_jouer_regions").addEventListener("click", async () => {
-    const { regions, criteres } = await chargerDonneesRegionsJeu();
-    if (Object.keys(regions).length < 2) { alert("Il faut au moins 2 regions enregistrees dans l'admin pour jouer."); return; }
-    if (Object.keys(criteres).length === 0) { alert("Aucun critere n'a encore ete ajoute dans l'admin."); return; }
-    demarrerJeuRegions(regions, criteres);
-  });
-
-  document.getElementById("btn_maj_donnees_regions").addEventListener("click", async () => {
-    if (!navigator.onLine) { alert("Tu dois etre connecte a internet pour mettre a jour les donnees."); return; }
-    await chargerDonneesRegionsJeu();
-    alert("Donnees mises a jour !");
-  });
+  document.getElementById("btn_quitter_quiz_fin").addEventListener("click", () => afficherEcran("ecran_menu_principal"));
 
   // ============ INITIALISATION ============
 
   chargerSectionsAccueil();
   remplirSelectSectionsQuiz();
   majEtatConnexionQuiz();
-  majEtatConnexionRegions();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

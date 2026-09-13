@@ -1,4 +1,4 @@
-const CACHE_NAME = "jeux-themes-v2";
+const CACHE_NAME = "jeux-themes-v3";
 const FICHIERS_A_CACHER = [
   "./index.html",
   "./manifest.json",
